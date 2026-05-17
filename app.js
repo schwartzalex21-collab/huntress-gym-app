@@ -12,6 +12,10 @@ let state = {
     shields: 0,
     bonusCompletedTotal: 0,
     bossesCompletedTotal: 0,
+    rareCompletedTotal: 0,
+    legendaryCompletedTotal: 0,
+    shieldsConsumedTotal: 0,
+    totalXPEarned: 0,
     streakRecomputedV1: false
   },
   stats: {
@@ -189,6 +193,10 @@ function getRank(level) {
 function addXP(amount, reason, statKey) {
   state.system.xp += amount;
   if (state.system.xp < 0) state.system.xp = 0;
+  if (amount > 0) {
+    state.system.totalXPEarned = (state.system.totalXPEarned || 0) + amount;
+    checkXPMilestones();
+  }
   let leveled = 0;
   while (state.system.xp >= getRequiredXP(state.system.level)) {
     state.system.xp -= getRequiredXP(state.system.level);
@@ -206,6 +214,14 @@ function addXP(amount, reason, statKey) {
     const sign = amount >= 0 ? '+' : '';
     showToast(`${sign}${amount} XP (${reason})`);
   }
+}
+
+function checkXPMilestones() {
+  const t = state.system.totalXPEarned;
+  if (t >= 1000) unlockAchievement('xp_1k');
+  if (t >= 10000) unlockAchievement('xp_10k');
+  if (t >= 50000) unlockAchievement('xp_50k');
+  if (t >= 100000) unlockAchievement('xp_100k');
 }
 
 // =================== HUNTER STATS (uncapped, curbă abruptă) ===================
@@ -229,9 +245,11 @@ function addStatXP(key, amount) {
         setTimeout(() => showToast(`✨ ${key} ${getStatTier(m).name} — Nivel ${m}!`), 600);
       }
     }
+    if (s.level >= 25) unlockAchievement('stat_25');
     if (s.level >= 50) unlockAchievement('stat_50');
     if (s.level >= 100) unlockAchievement('stat_100');
-    checkAllStats25();
+    if (s.level >= 200) unlockAchievement('stat_200');
+    checkAllStatsBalance();
   }
 }
 
@@ -253,9 +271,11 @@ function getStatTier(level) {
   return                  { name: 'Transcendent', color: '#ffffff', glow: '0 0 24px rgba(255,255,255,0.9)' };
 }
 
-function checkAllStats25() {
-  const all = ['STR','END','MND','WIL'].every(k => state.stats[k].level >= 25);
-  if (all) unlockAchievement('all_stats_25');
+function checkAllStatsBalance() {
+  const ks = ['STR','END','MND','WIL'];
+  if (ks.every(k => state.stats[k].level >= 25)) unlockAchievement('all_stats_25');
+  if (ks.every(k => state.stats[k].level >= 50)) unlockAchievement('all_stats_50');
+  if (ks.every(k => state.stats[k].level >= 100)) unlockAchievement('all_stats_100');
 }
 
 // =================== HABITS ===================
@@ -297,10 +317,35 @@ function checkPerfectDay(date) {
   state.system.lastPerfectDate = date;
   const milestones = { 7: 150, 30: 500, 60: 1000, 90: 2000, 120: 3000, 365: 10000 };
   const s = state.system.perfectStreak;
-  if (milestones[s]) setTimeout(() => addXP(milestones[s], `🌹 ${s} zile streak!`), 1500);
+  if (milestones[s]) setTimeout(() => addXP(milestones[s], `🍑 ${s} zile streak!`), 1500);
+  // Streak consecutiv
   if (s >= 30) unlockAchievement('iron_will');
+  if (s >= 60) unlockAchievement('streak_60');
   if (s >= 100) unlockAchievement('streak_100');
+  // Perfect days cumulative
+  checkPerfectDaysCumulative();
+  // Weekend perfect (sâmbătă + duminică ambele complete)
+  checkWeekendPerfect(date);
   saveState();
+}
+
+function checkPerfectDaysCumulative() {
+  const total = Object.values(state.habits).filter(isPerfectDay).length;
+  if (total >= 7) unlockAchievement('perfect_7');
+  if (total >= 30) unlockAchievement('perfect_30');
+  if (total >= 100) unlockAchievement('perfect_100');
+  if (total >= 365) unlockAchievement('perfect_365');
+}
+
+function checkWeekendPerfect(date) {
+  const dow = dayOfWeek(date);
+  if (dow !== 6 && dow !== 0) return; // doar sâmbătă (6) sau duminică (0)
+  // Găsește perechea
+  const sat = dow === 6 ? date : addDaysKey(date, -1);
+  const sun = dow === 0 ? date : addDaysKey(date, 1);
+  if (isPerfectDay(state.habits[sat]) && isPerfectDay(state.habits[sun])) {
+    unlockAchievement('weekend_perfect');
+  }
 }
 
 // =================== STREAK RECOMPUTE ===================
@@ -346,7 +391,7 @@ function manualRecomputeStreak() {
   state.system.lastPerfectDate = lastPerfect;
   saveState();
   render();
-  showToast(`🌹 Streak recalculat: ${oldStreak} → ${streak} zile`);
+  showToast(`🍑 Streak recalculat: ${oldStreak} → ${streak} zile`);
 }
 
 // =================== STREAK ROLLOVER & SHIELDS ===================
@@ -363,7 +408,9 @@ function processDailyRollover() {
       while (missed > 0 && state.system.perfectStreak > 0) {
         if (state.system.shields > 0) {
           state.system.shields--;
+          state.system.shieldsConsumedTotal = (state.system.shieldsConsumedTotal || 0) + 1;
           unlockAchievement('untouchable');
+          if (state.system.shieldsConsumedTotal >= 3) unlockAchievement('shield_save_3');
         } else {
           state.system.perfectStreak = Math.round(state.system.perfectStreak * 0.7);
         }
@@ -429,16 +476,27 @@ function toggleBonusMission(id) {
   if (!m || m.completed) return;
   m.completed = true;
   state.system.bonusCompletedTotal = (state.system.bonusCompletedTotal || 0) + 1;
+  if (m.rarity === 'rare') state.system.rareCompletedTotal = (state.system.rareCompletedTotal || 0) + 1;
+  if (m.rarity === 'legendary') state.system.legendaryCompletedTotal = (state.system.legendaryCompletedTotal || 0) + 1;
   addXP(m.xp, `Bonus: ${getBonusMeta(id).title}`, m.stat);
   if (m.rarity === 'rare') {
     if (state.system.shields < 3) {
       state.system.shields++;
       showToast(`🛡 +1 Shield ${state.system.shields}/3`);
+      if (state.system.shields >= 3) unlockAchievement('triple_shield');
     }
   }
   if (m.rarity === 'legendary') unlockAchievement('legendary_pull');
-  if (state.system.bonusCompletedTotal >= 50) unlockAchievement('bonus_hunter');
-  if (state.system.bonusCompletedTotal >= 500) unlockAchievement('bonus_500');
+  // Cumulative bonus
+  const total = state.system.bonusCompletedTotal;
+  if (total >= 50) unlockAchievement('bonus_hunter');
+  if (total >= 200) unlockAchievement('bonus_200');
+  if (total >= 500) unlockAchievement('bonus_500');
+  // Per rarity
+  if ((state.system.rareCompletedTotal || 0) >= 25) unlockAchievement('rare_25');
+  if ((state.system.rareCompletedTotal || 0) >= 100) unlockAchievement('rare_100');
+  if ((state.system.legendaryCompletedTotal || 0) >= 5) unlockAchievement('legendary_5');
+  if ((state.system.legendaryCompletedTotal || 0) >= 25) unlockAchievement('legendary_25');
   addStatXP('WIL', Math.round(m.xp * 0.25));
   saveState();
   render();
@@ -483,7 +541,10 @@ function completeBoss() {
   addXP(250, 'QUEEN SLAYER!', 'WIL');
   addStatXP('STR', 30);
   unlockAchievement('boss_slayer');
-  if (state.system.bossesCompletedTotal >= 10) unlockAchievement('boss_10');
+  const b = state.system.bossesCompletedTotal;
+  if (b >= 5) unlockAchievement('boss_5');
+  if (b >= 10) unlockAchievement('boss_10');
+  if (b >= 25) unlockAchievement('boss_25');
   saveState();
   render();
 }
@@ -813,7 +874,7 @@ function renderHome(el) {
     <div class="glance-widget">
       <div class="glance-row">
         <div>
-          <div class="glance-streak">${streak}🌹</div>
+          <div class="glance-streak">${streak}🍑</div>
           <div class="glance-streak-label">Streak Zile</div>
         </div>
         <div class="glance-missions">
@@ -1229,9 +1290,13 @@ function finishWorkout() {
     addStatXP('STR', 25);
     checkPerfectDay(today);
   }
-  // Glute dedication & hip thrust master
+  // Antrenamente cumulative + hip thrust master
   const totalWorkouts = Object.keys(state.habits).filter(d => state.habits[d].workout_xp_claimed).length;
+  if (totalWorkouts >= 10) unlockAchievement('workout_10');
+  if (totalWorkouts >= 30) unlockAchievement('workout_30');
   if (totalWorkouts >= 50) unlockAchievement('glute_50');
+  if (totalWorkouts >= 100) unlockAchievement('workout_100');
+  if (totalWorkouts >= 300) unlockAchievement('workout_300');
   const hipThrustDays = ['lower_a', 'lower_b', 'lower_c'];
   const hipThrustSessions = Object.values(state.workouts).filter(w => hipThrustDays.includes(w.dayKey) && hasAnyData(w)).length;
   if (hipThrustSessions >= 100) unlockAchievement('hip_thrust_master');
@@ -1646,7 +1711,7 @@ function renderHunter(el) {
 
     <div class="card">
       <div class="section-subtitle">Date</div>
-      <button class="export-btn" onclick="manualRecomputeStreak()">🌹 Recalculează Streak din istoric</button>
+      <button class="export-btn" onclick="manualRecomputeStreak()">🍑 Recalculează Streak din istoric</button>
       <button class="export-btn" onclick="exportData()">📤 Export backup JSON</button>
       <button class="export-btn" onclick="document.getElementById('import-input').click()">📥 Import backup</button>
       <input type="file" id="import-input" accept=".json,application/json" style="display:none" onchange="importData(event)">
