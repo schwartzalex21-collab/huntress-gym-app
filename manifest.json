@@ -1,0 +1,24 @@
+{
+  "name": "GLOW HUNTRESS",
+  "short_name": "HUNTRESS",
+  "description": "Glute-Focused 5-Day Program — Gamified Fitness & Wellness for Her",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1115",
+  "theme_color": "#ff7a8a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%231a1115'/><text x='96' y='128' font-family='Georgia' font-size='100' text-anchor='middle' fill='%23ff7a8a'>🌹</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%231a1115'/><text x='256' y='340' font-family='Georgia' font-size='260' text-anchor='middle' fill='%23ff7a8a'>🌹</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
