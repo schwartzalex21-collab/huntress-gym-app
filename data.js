@@ -101,7 +101,6 @@ const BONUS_MISSION_POOL = [
   { id: 'plank_3min',      title: 'Plank Total 3 min',        desc: 'Acumulează 3 minute de plank total (oricâte serii).',                            xp: 50, rarity: 'rare',      stat: 'STR' },
   { id: 'hike_60',         title: 'Plimbare 1h Natură',       desc: '1 oră de plimbare în natură (parc, pădure). Fără ecran.',                        xp: 55, rarity: 'rare',      stat: 'STR' },
   { id: 'glute_burnout',   title: 'Glute Burnout BW',         desc: '100 glute bridges + 100 kickbacks pe parcursul zilei. Pump acasă.',              xp: 60, rarity: 'rare',      stat: 'STR' },
-  { id: 'swim_30',         title: 'Înot 30 min',              desc: '30 minute de înot, oricâte stiluri.',                                            xp: 55, rarity: 'rare',      stat: 'STR' },
   { id: 'run_3k',          title: 'Aleargă 3 km',             desc: 'Aleargă 3 km, oricare ar fi ritmul.',                                            xp: 60, rarity: 'rare',      stat: 'STR' },
   { id: 'workout_bonus',   title: 'Mini Workout Acasă',       desc: '30 min antrenament glute BW extra (peste programul zilei).',                     xp: 90, rarity: 'legendary', stat: 'STR' },
   { id: 'steps_15k',       title: '15.000 Pași',              desc: 'Atinge 15.000 pași într-o singură zi.',                                          xp: 90, rarity: 'legendary', stat: 'STR' },
@@ -195,27 +194,73 @@ const BOSS_MISSIONS = [
 
 // =================== ACHIEVEMENTS ===================
 const ACHIEVEMENTS = {
+  // ─── Începătoare / First steps ───
   first_blood:      { id: 'first_blood',      title: 'Prima Scânteie',    desc: 'Prima misiune completată vreodată',          icon: '✨', rarity: 'bronze' },
-  week_warrior:     { id: 'week_warrior',     title: 'Săptămâna Perfectă',desc: 'Prima săptămână cu toate misiunile zilnice', icon: '🌸', rarity: 'silver' },
-  iron_will:        { id: 'iron_will',        title: 'Diamond Will',      desc: '30 de zile streak consecutive',              icon: '💎', rarity: 'silver' },
+  untouchable:      { id: 'untouchable',      title: 'Shielded',          desc: 'Prima utilizare de shield',                  icon: '🛡',  rarity: 'bronze' },
+  legendary_pull:   { id: 'legendary_pull',   title: 'Legendary Bloom',   desc: 'Prima misiune legendară completată',         icon: '💎', rarity: 'gold' },
   boss_slayer:      { id: 'boss_slayer',      title: 'Queen Slayer',      desc: 'Primul Boss Day câștigat',                   icon: '👑', rarity: 'gold' },
-  bonus_hunter:     { id: 'bonus_hunter',     title: 'Bonus Queen',       desc: '50 misiuni bonus completate',                icon: '🎯', rarity: 'silver' },
-  legendary_pull:   { id: 'legendary_pull',   title: 'Legendary Bloom',   desc: 'Prima misiune legendară completată',         icon: '🌹', rarity: 'gold' },
-  untouchable:      { id: 'untouchable',      title: 'Shielded',          desc: 'Prima utilizare de shield',                  icon: '🛡', rarity: 'bronze' },
-  shadow_monarch:   { id: 'shadow_monarch',   title: 'Queen Mode',        desc: 'Ajunge la S-Rank sau peste',                 icon: '✨', rarity: 'legendary' },
+
+  // ─── Streak (zile consecutive perfecte) ───
+  week_warrior:     { id: 'week_warrior',     title: 'Săptămâna Perfectă',desc: 'Prima săptămână cu toate misiunile zilnice', icon: '🌸', rarity: 'silver' },
+  iron_will:        { id: 'iron_will',        title: 'Diamond Will',      desc: '30 zile streak consecutive',                 icon: '💎', rarity: 'silver' },
+  streak_60:        { id: 'streak_60',        title: 'Two Months Glow',   desc: '60 zile streak consecutive',                 icon: '🌺', rarity: 'gold' },
+  streak_100:       { id: 'streak_100',       title: 'Eternal Glow',      desc: '100 zile streak consecutive',                icon: '∞',  rarity: 'legendary' },
+
+  // ─── Zile perfecte cumulative (nu consecutiv) ───
+  perfect_7:        { id: 'perfect_7',        title: '7 Zile Perfecte',   desc: '7 zile perfecte cumulate',                   icon: '🍀', rarity: 'bronze' },
+  perfect_30:       { id: 'perfect_30',       title: '30 Zile Perfecte',  desc: '30 zile perfecte cumulate',                  icon: '🎀', rarity: 'silver' },
+  perfect_100:      { id: 'perfect_100',      title: 'Centurion Discipline', desc: '100 zile perfecte cumulate',              icon: '🏅', rarity: 'gold' },
+  perfect_365:      { id: 'perfect_365',      title: 'An Perfect',        desc: '365 zile perfecte cumulate',                 icon: '🌟', rarity: 'legendary' },
+  weekend_perfect:  { id: 'weekend_perfect',  title: 'Perfect Weekend',   desc: 'Sâmbătă + duminică ambele perfecte',         icon: '🎉', rarity: 'bronze' },
+
+  // ─── XP total acumulat ───
+  xp_1k:            { id: 'xp_1k',            title: '1K Total XP',       desc: '1.000 XP acumulate',                         icon: '💫', rarity: 'bronze' },
+  xp_10k:           { id: 'xp_10k',           title: '10K Total XP',      desc: '10.000 XP acumulate',                        icon: '⭐', rarity: 'silver' },
+  xp_50k:           { id: 'xp_50k',           title: '50K Total XP',      desc: '50.000 XP acumulate',                        icon: '🌟', rarity: 'gold' },
+  xp_100k:          { id: 'xp_100k',          title: 'XP Goddess',        desc: '100.000 XP acumulate',                       icon: '✨', rarity: 'legendary' },
+
+  // ─── Ranguri globale ───
   rank_d:           { id: 'rank_d',           title: 'D-Rank',            desc: 'Atinge rangul D',                            icon: '🥉', rarity: 'bronze' },
   rank_c:           { id: 'rank_c',           title: 'C-Rank',            desc: 'Atinge rangul C',                            icon: '🥈', rarity: 'bronze' },
-  rank_b:           { id: 'rank_b',           title: 'B-Rank',            desc: 'Atinge rangul B',                            icon: '⚜️', rarity: 'silver' },
+  rank_b:           { id: 'rank_b',           title: 'B-Rank',            desc: 'Atinge rangul B',                            icon: '⚜️',rarity: 'silver' },
   rank_a:           { id: 'rank_a',           title: 'A-Rank',            desc: 'Atinge rangul A',                            icon: '🏆', rarity: 'gold' },
   rank_s:           { id: 'rank_s',           title: 'S-Rank',            desc: 'Atinge rangul S',                            icon: '👑', rarity: 'gold' },
+  shadow_monarch:   { id: 'shadow_monarch',   title: 'Queen Mode',        desc: 'Ajunge la S-Rank sau peste',                 icon: '🦋', rarity: 'legendary' },
+
+  // ─── Hunter Stats ───
+  stat_25:          { id: 'stat_25',          title: 'Quarter Stat',      desc: 'Un stat ajunge la nivelul 25',               icon: '🔸', rarity: 'bronze' },
   stat_50:          { id: 'stat_50',          title: 'Half Hundred',      desc: 'Un stat ajunge la nivelul 50',               icon: '⚡', rarity: 'silver' },
   stat_100:         { id: 'stat_100',         title: 'Centurion',         desc: 'Un stat ajunge la nivelul 100',              icon: '💯', rarity: 'gold' },
-  all_stats_25:     { id: 'all_stats_25',     title: 'Balanced Goddess',  desc: 'Toate 4 stats peste nivelul 25',             icon: '⚖️', rarity: 'silver' },
-  bonus_500:        { id: 'bonus_500',        title: 'Bonus Empress',     desc: '500 misiuni bonus completate total',         icon: '🌟', rarity: 'legendary' },
-  boss_10:          { id: 'boss_10',          title: 'Boss Hunter',       desc: '10 Boss Days câștigate',                     icon: '⚔', rarity: 'gold' },
-  streak_100:       { id: 'streak_100',       title: 'Eternal Glow',      desc: '100 zile streak consecutive',                icon: '∞', rarity: 'legendary' },
-  glute_50:         { id: 'glute_50',         title: 'Glute Goddess',     desc: '50 antrenamente completate',                 icon: '🍑', rarity: 'gold' },
-  hip_thrust_master:{ id: 'hip_thrust_master',title: 'Hip Thrust Master', desc: '100 sesiuni cu hip thrust complete',         icon: '👸', rarity: 'legendary' }
+  stat_200:         { id: 'stat_200',         title: 'Stat Empress',      desc: 'Un stat ajunge la nivelul 200',              icon: '🪩', rarity: 'legendary' },
+  all_stats_25:     { id: 'all_stats_25',     title: 'Balanced Goddess',  desc: 'Toate 4 stats peste nivelul 25',             icon: '⚖️',rarity: 'silver' },
+  all_stats_50:     { id: 'all_stats_50',     title: 'Quad Mastery',      desc: 'Toate 4 stats peste nivelul 50',             icon: '🔱', rarity: 'gold' },
+  all_stats_100:    { id: 'all_stats_100',    title: 'Divine Balance',    desc: 'Toate 4 stats peste nivelul 100',            icon: '🌈', rarity: 'legendary' },
+
+  // ─── Antrenamente ───
+  workout_10:       { id: 'workout_10',       title: '10 Antrenamente',   desc: '10 antrenamente complete',                   icon: '💪', rarity: 'bronze' },
+  workout_30:       { id: 'workout_30',       title: '30 Antrenamente',   desc: '30 antrenamente complete',                   icon: '🏋️',rarity: 'silver' },
+  glute_50:         { id: 'glute_50',         title: 'Glute Goddess',     desc: '50 antrenamente complete',                   icon: '🍑', rarity: 'gold' },
+  workout_100:      { id: 'workout_100',      title: '100 Antrenamente',  desc: '100 antrenamente complete',                  icon: '🦾', rarity: 'gold' },
+  workout_300:      { id: 'workout_300',      title: 'Veterană',          desc: '300 antrenamente complete',                  icon: '👸', rarity: 'legendary' },
+  hip_thrust_master:{ id: 'hip_thrust_master',title: 'Hip Thrust Master', desc: '100 sesiuni de lower (cu hip thrust)',       icon: '🔥', rarity: 'legendary' },
+
+  // ─── Bonus missions ───
+  bonus_hunter:     { id: 'bonus_hunter',     title: 'Bonus Queen',       desc: '50 misiuni bonus completate',                icon: '🎯', rarity: 'silver' },
+  bonus_200:        { id: 'bonus_200',        title: 'Bonus Hunter',      desc: '200 misiuni bonus completate',               icon: '🏹', rarity: 'gold' },
+  bonus_500:        { id: 'bonus_500',        title: 'Bonus Empress',     desc: '500 misiuni bonus completate',               icon: '🌟', rarity: 'legendary' },
+  rare_25:          { id: 'rare_25',          title: '25 Rare Done',      desc: '25 misiuni rare completate',                 icon: '🔮', rarity: 'silver' },
+  rare_100:         { id: 'rare_100',         title: '100 Rare Done',     desc: '100 misiuni rare completate',                icon: '💠', rarity: 'gold' },
+  legendary_5:      { id: 'legendary_5',      title: '5 Legendary',       desc: '5 misiuni legendare completate',             icon: '🎇', rarity: 'silver' },
+  legendary_25:     { id: 'legendary_25',     title: '25 Legendary',      desc: '25 misiuni legendare completate',            icon: '🪄', rarity: 'legendary' },
+
+  // ─── Boss days ───
+  boss_5:           { id: 'boss_5',           title: 'Boss Killer',       desc: '5 Boss Days câștigate',                      icon: '⚔️', rarity: 'silver' },
+  boss_10:          { id: 'boss_10',          title: 'Boss Hunter',       desc: '10 Boss Days câștigate',                     icon: '🗡', rarity: 'gold' },
+  boss_25:          { id: 'boss_25',          title: 'Boss Empress',      desc: '25 Boss Days câștigate',                     icon: '🛡️', rarity: 'legendary' },
+
+  // ─── Special ───
+  triple_shield:    { id: 'triple_shield',    title: 'Triple Shield',     desc: 'Toate 3 shields-uri active simultan',        icon: '🛡', rarity: 'bronze' },
+  shield_save_3:    { id: 'shield_save_3',    title: 'Shield Saver',      desc: '3 shields folosite pentru a salva streak',   icon: '🪖', rarity: 'silver' }
 };
 
 // =================== MOTIVATIONAL QUOTES (weekly report + tip of day) ===================
@@ -238,28 +283,43 @@ const QUOTES = [
   '"Hunter-ița nu se compară cu nimeni. Doar cu ea de ieri."'
 ];
 
-// Tips zilnice rotative (PDF-derived wisdom)
+// Tips zilnice rotative — wisdom general de viață, nu exerciții
 const DAILY_TIPS = [
-  'Hip thrust este #1 pentru glute. Fă-l pe FIECARE zi de lower. Squeeze maxim 2s la vârf.',
-  'La 45kg, fiecare gram de proteină contează. Minim 80-100g/zi, distribuit în 4-5 mese.',
-  'PAS LUNG la lunges = glute focus. Pas scurt = quad. Aici vrem LUNG.',
-  'Conexiunea minte-mușchi este TOTUL. Simte glute-ul în fiecare rep, nu doar mișca greutatea.',
-  'Glute activation OBLIGATORIU la începutul fiecărui antrenament. Fără ea, quads-urile preiau tot.',
-  'Squat profund (sub paralel) = glute activation maximă. Genunchii peste degete e OK.',
-  'RDL: spatele DREPT mereu. Stretch hamstrings, împinge șoldul ÎNAPOI. NU rotunjește.',
-  'Cardio excesiv catabolizează mușchiul. 2-3 plimbări de 20-30 min/săpt sunt suficiente.',
-  'Tempo 3-1-2: 3s coborâre, 1s pauză, 2s urcare. Time under tension > greutate brută.',
-  'Pull-through: hip hinge pur, glute squeeze 2s la vârf. NU folosi spatele inferior.',
-  'Hip flexor stretch zilnic — previne anterior pelvic tilt, face fesele să arate mai proeminente.',
-  'Surplus caloric 200-300 kcal peste mentenanță. Nu poți construi mușchi în deficit.',
-  'Cântărire săptămânală dimineața. Target: +0.15-0.3 kg/săpt. Lent și constant.',
-  'Somn 7-9h obligatoriu. GH-ul (hormon de creștere) se secretă în somn profund.',
-  'Pre-workout (1-2h înainte): carbs + proteine. Ex: ovăz cu banană + iaurt grecesc.',
-  '5 antrenamente mediocre > 2 antrenamente perfecte. Consistența bate perfecțiunea.',
-  'Mit FALS: "Dacă ridic greutăți o să devin musculoasă." Femeile au 15-20x mai puțin testosteron.',
-  'Bulgarian split squat: stretch maxim pe hip flexor, glute focus pe piciorul din față.',
-  'Single leg hip thrust corectează dezechilibrele dintre cele 2 fese. Important.',
-  'Cable face pulls zilnic = postură perfectă. Previne umerii rotați din statul la birou.'
+  'Bea 500ml apă imediat după trezire. Corpul tău e deshidratat după 8 ore fără apă — pielea, mintea, totul.',
+  'Cea mai bună investiție pe care o poți face e în tine: somn bun, mâncare reală, oameni buni.',
+  'Telefonul în altă cameră noaptea = somn de 2x mai bun. Încearcă o săptămână și o să vezi.',
+  'O femeie disciplinată în acțiuni mici devine femeia pe care o admiri în acțiuni mari.',
+  'Nu te compara cu o femeie de pe Instagram. Compară-te doar cu cine erai acum 6 luni.',
+  'Vorbește cu tine cum ai vorbi cu cea mai bună prietenă a ta. Cu blândețe și onestitate.',
+  'Stresul îmbătrânește pielea mai mult decât soarele. Învață să respiri profund când te enervezi.',
+  'Cumpără puține haine, dar de calitate. Mai puțin = mai elegant. Mai puțin = mai liber.',
+  'Citește 10 pagini pe zi. În 1 an = aproximativ 12 cărți. Te schimbă mai mult decât crezi.',
+  'Spune NU mai des. Fiecare „da" la lucruri care nu-ți plac e un „nu" la viața pe care o vrei.',
+  'Pielea oglindește ce mănânci, cât bei apă și cât dormi. Nu există cremă magică.',
+  'Tăcerea e adesea cel mai puternic răspuns. Nu trebuie să răspunzi imediat la orice.',
+  'Începe ziua fără telefon. Primele 30 min sunt pentru tine, nu pentru notificări.',
+  'Banii economisiți sunt libertate. Salvează 10% din venit minimum, mereu, înainte de orice.',
+  'Cei care te critică cel mai mult sunt cei care nu îndrăznesc să facă ce faci tu.',
+  'Învață un skill nou la fiecare 3-6 luni. Mintea care învață rămâne tânără.',
+  'Iartă pe cine ți-a făcut rău — nu pentru ei, ci pentru tine. Resentimentul te otrăvește din interior.',
+  'Părinții și bunicii tăi îmbătrânesc. Sună-i mai des. Niciodată nu vei regreta că ai vorbit prea mult cu ei.',
+  'Cel mai sexy nu e ce porți, ci cum te miști. Postura dreaptă și pasul sigur — gratis, dar prețioase.',
+  'Disciplina e libertate. Persoanele indisciplinate devin sclavele propriilor capricii.',
+  'Călătorește când ești tânără. Memoriile valorează mai mult decât hainele și gadget-urile.',
+  'Frumusețea exterioară se schimbă. Caracterul, inteligența, blândețea — astea cresc cu vârsta.',
+  'Spune mulțumesc concret. Nu doar „mersi" generic. Spune EXACT pentru ce. Asta schimbă relațiile.',
+  'Mâncarea nu e doar combustibil — e medicament sau otravă. Alege cu intenție, nu din plictiseală.',
+  'Postura ta îți schimbă hormonii în 2 minute. Stai dreaptă, respiră adânc, ridică bărbia.',
+  'Cumpără cărți, nu like-uri. Investește în ce-ți construiește mintea, nu ce-ți consumă atenția.',
+  'Nu te grăbi să răspunzi când ești supărată. „Lasă-mă să mă gândesc" e răspuns elegant și matur.',
+  'Plătește-te primul. Pune 10% din venit deoparte ÎNAINTE de orice cheltuială.',
+  'Oamenii pe care îi inviți în viața ta îți determină nivelul. Alege-i cu grijă, taie-i când e nevoie.',
+  'Niciodată nu te plânge fără să propui o soluție. Plângerea singură e otravă pentru cei din jur.',
+  'Trei lucruri îți schimbă viața dacă le faci 5 ani: lectură zilnică, sport regulat, economisire constantă.',
+  'Nu împrumuta bani prietenilor decât dacă ești ok să nu-i mai vezi vreodată — banii și amiciția se sting împreună.',
+  'O scuzare sinceră și o promisiune ținută sunt mai valoroase decât 100 de complimente.',
+  'Râsul e cel mai bun ten cream. Petrece timp cu oameni care te fac să râzi din burtă.',
+  'Sportul nu e despre cum arăți. E despre cum te simți. Frumusețea vine ca bonus, nu ca scop.'
 ];
 
 window.PROGRAM = PROGRAM;

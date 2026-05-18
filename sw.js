@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glow-huntress-v1';
+const CACHE_NAME = 'glow-huntress-v2';
 const ASSETS = [
   './',
   './index.html',
