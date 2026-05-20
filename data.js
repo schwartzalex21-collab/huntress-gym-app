@@ -148,7 +148,7 @@ const BONUS_MISSION_POOL = [
   // ─── WIL · voință (fără cold-related, mai blândă) ───
   { id: 'no_phone_morning',title: 'Prima Oră fără Telefon',   desc: 'Prima oră după trezire — zero ecrane. Doar tu și ziua.',                         xp: 30, rarity: 'common',    stat: 'WIL' },
   { id: 'no_food_8pm',     title: 'Fără Mâncare după 20:00',  desc: 'După 20:00 doar apă sau ceai. Lasă digestia să se odihnească.',                  xp: 30, rarity: 'common',    stat: 'WIL' },
-  { id: 'early_sleep',     title: 'Culcat înainte de 22:30',  desc: 'În pat, telefon deoparte, înainte de 22:30.',                                    xp: 25, rarity: 'common',    stat: 'WIL' },
+  { id: 'evening_routine', title: 'Rutină de Seară 20 min',   desc: '20 min înainte de somn: skincare + carte + apă + fără ecran. Decompresie reală.', xp: 30, rarity: 'common',    stat: 'WIL' },
   { id: 'no_snacking',     title: 'Fără Gustări Procesate',   desc: 'Toată ziua fără gustări procesate. Doar fructe, nuci, iaurt.',                   xp: 30, rarity: 'common',    stat: 'WIL' },
   { id: 'no_social_morning',title:'Fără Social până la 12:00',desc: 'Zero rețele sociale înainte de prânz. Liniște dimineața.',                       xp: 35, rarity: 'common',    stat: 'WIL' },
   { id: 'silent_hour',     title: '1h Liniște Absolută',      desc: '1 oră în liniște. Fără muzică, voci, ecrane. Doar tu.',                          xp: 35, rarity: 'common',    stat: 'WIL' },
