@@ -2328,3 +2328,26 @@ input[type="number"], input[type="text"], textarea { font-size: 16px !important;
 .status-xp-bar { height: 6px; background: var(--bg-input); border-radius: 4px; overflow: hidden; margin-top: 16px; }
 .status-xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 4px; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
 .status-note { font-size: 11px; color: var(--text-secondary); margin-top: 9px; text-align: center; letter-spacing: 0.3px; }
+
+/* ============ GHID FORMĂ CORECTĂ ============ */
+.form-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid var(--border-strong);
+  font-family: 'Sora', sans-serif; font-weight: 700; font-size: 12px;
+  vertical-align: middle; margin-left: 6px; line-height: 1; flex-shrink: 0;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.form-btn:active { transform: scale(0.9); }
+#form-body { max-height: 52vh; overflow-y: auto; }
+.form-section-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin: 16px 0 8px; }
+.form-section-label:first-child { margin-top: 4px; }
+.form-section-label.danger { color: var(--danger); }
+.form-steps { margin: 0; padding-left: 22px; }
+.form-steps li { font-size: 14px; line-height: 1.55; color: var(--text-primary); margin-bottom: 8px; }
+.form-steps li::marker { color: var(--accent); font-weight: 700; }
+.form-mistakes { margin: 0; padding-left: 20px; list-style: none; }
+.form-mistakes li { font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 7px; position: relative; }
+.form-mistakes li::before { content: '✕'; color: var(--danger); position: absolute; left: -18px; font-weight: 700; }
+.form-empty { font-size: 14px; line-height: 1.6; color: var(--text-secondary); }

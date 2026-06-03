@@ -322,7 +322,217 @@ const DAILY_TIPS = [
   'Sportul nu e despre cum arăți. E despre cum te simți. Frumusețea vine ca bonus, nu ca scop.'
 ];
 
+// =================== GHID FORMĂ CORECTĂ (pt începătoare) ===================
+// Un ghid per mișcare, mapat la toate id-urile variantelor. q = termen pt căutare YouTube.
+const EXERCISE_FORM = (function () {
+  const guides = {
+    hip_thrust: { q: 'hip thrust', form: [
+      'Sprijină omoplații pe o bancă; bara (cu pernă) peste șolduri.',
+      'Tălpi late pe podea, genunchii ajung la ~90° când ești sus.',
+      'Împinge din CĂLCÂIE și ridică șoldul până corpul e drept (umeri–șold–genunchi în linie).',
+      'Strânge fesele 1-2s sus, bărbia spre piept, coastele în jos.',
+      'Coboară lent, fără să arcuiești spatele.'
+    ], mistakes: ['Arcuiești spatele (lombar) în loc să strângi fesele.', 'Împingi din vârfuri, nu din călcâi.', 'Nu ajungi sus la linie dreaptă șold–genunchi.'] },
+
+    sl_hip_thrust: { q: 'single leg hip thrust', form: [
+      'Omoplați pe bancă, un picior pe podea, celălalt întins/ridicat.',
+      'Împinge din călcâiul piciorului de jos.',
+      'Ridică șoldul drept, fără să-l lași într-o parte.',
+      'Strânge fesa 1-2s, coboară controlat.'
+    ], mistakes: ['Lași șoldul să cadă într-o parte (asimetric).', 'Folosești elan în loc de control.', 'Împingi din vârf, nu din călcâi.'] },
+
+    goblet_squat: { q: 'goblet squat', form: [
+      'Ține o ganteră vertical la piept, ambele mâini sub partea de sus.',
+      'Picioare la lățimea umerilor, vârfuri ușor în afară.',
+      'Coboară împingând șoldul înapoi, torso vertical, genunchii spre vârfuri.',
+      'Coboară cât poți cu spatele drept, apoi împinge din călcâie în sus.'
+    ], mistakes: ['Genunchii cad spre interior.', 'Te apleci în față / ridici călcâiele.', 'Spatele rotunjit jos.'] },
+
+    sumo_goblet: { q: 'sumo goblet squat', form: [
+      'Picioare mai late decât umerii, vârfuri în afară (~45°).',
+      'Ganteră la piept, torso vertical.',
+      'Coboară împingând genunchii spre EXTERIOR (în linie cu vârfurile).',
+      'Împinge din călcâie, strânge fesele sus.'
+    ], mistakes: ['Genunchii cad spre interior.', 'Picioare prea apropiate.', 'Te apleci în față.'] },
+
+    bulgarian_split: { q: 'bulgarian split squat', form: [
+      'Piciorul din spate pe bancă, cel din față cu un pas LUNG în față (focus fese).',
+      'Coboară drept în jos, genunchiul din față peste gleznă, torso ușor înclinat.',
+      'Coboară până coapsa din față e ~paralelă, apoi împinge din călcâiul din față.',
+      'Control total, fără să te legeni.'
+    ], mistakes: ['Pas prea scurt (suprasolicită genunchiul).', 'Genunchiul trece mult peste vârf.', 'Te dezechilibrezi / cobori prea repede.'] },
+
+    reverse_lunge: { q: 'reverse lunge', form: [
+      'Din picioare, fă un pas mare ÎNAPOI.',
+      'Coboară genunchiul din spate spre podea, torso drept.',
+      'Genunchiul din față peste gleznă, ~90°.',
+      'Împinge din călcâiul piciorului din FAȚĂ ca să revii.'
+    ], mistakes: ['Pas prea mic.', 'Te apleci în față.', 'Împingi din piciorul din spate.'] },
+
+    walking_lunges: { q: 'walking lunges', form: [
+      'Pas LUNG în față (pentru fese), coboară genunchiul din spate spre podea.',
+      'Torso drept, genunchiul din față peste gleznă.',
+      'Împinge din călcâiul din față și pășește direct în următorul lunge.',
+      'Echilibru, privirea înainte.'
+    ], mistakes: ['Pași prea scurți.', 'Genunchiul trece mult peste vârf.', 'Te apleci / te legeni.'] },
+
+    rdl_db: { q: 'romanian deadlift dumbbell', form: [
+      'Gantere în față, picioare la lățimea șoldului, genunchi ușor flexați (FIXI).',
+      'Împinge ȘOLDUL înapoi și coboară ganterele aproape de picioare.',
+      'Spate DREPT (neutru); simți întindere în spatele coapsei.',
+      'Coboară până la jumătatea tibiei, apoi împinge șoldul în față și strânge fesele sus.'
+    ], mistakes: ['Rotunjești spatele (cel mai periculos!).', 'Îndoi genunchii ca la genuflexiune (e hip hinge, nu squat).', 'Cobori ganterele departe de corp.'] },
+
+    cable_pull_through: { q: 'cable pull through', form: [
+      'Cu spatele la cablu (jos), funia între picioare, pași în față.',
+      'Împinge șoldul înapoi (hip hinge), spate drept.',
+      'Trage înainte din FESE (nu din brațe), extinde șoldul complet.',
+      'Strânge fesele 1-2s, revino controlat.'
+    ], mistakes: ['Tragi din brațe în loc de fese.', 'Rotunjești spatele.', 'Te apleci pe spate la final.'] },
+
+    glute_bridge: { q: 'glute bridge', form: [
+      'Întinsă pe spate, genunchi îndoiți, tălpi aproape de fese.',
+      'Împinge din călcâie și ridică șoldul.',
+      'Strânge fesele sus 2s (corp drept umeri–genunchi).',
+      'Coboară controlat.'
+    ], mistakes: ['Arcuiești lombarul în loc de fese.', 'Tălpile prea departe (lucrează ischio).', 'Nu strângi sus.'] },
+
+    frog_pumps: { q: 'frog pumps glute', form: [
+      'Întinsă pe spate, tălpile lipite, genunchii căzuți în afară (poziție „broască").',
+      'Împinge din tălpi/călcâie și ridică șoldul.',
+      'Strânge fesele sus, coboară controlat, repetă pompat.'
+    ], mistakes: ['Folosești lombarul.', 'Range prea mic (nu strângi sus).', 'Genunchii nu sunt relaxați în afară.'] },
+
+    cable_kickback: { q: 'cable glute kickback', form: [
+      'Gleznieră la cablu jos, cu fața la aparat, ușor aplecată din șold.',
+      'Împinge piciorul ÎNAPOI și ușor în sus, din FESĂ.',
+      'Strânge fesa 1-2s la vârf, fără să arcuiești spatele.',
+      'Revino controlat, fără elan.'
+    ], mistakes: ['Folosești elan/spatele în loc de fesă.', 'Arcuiești lombarul.', 'Compensezi cu spatele pt range mai mare.'] },
+
+    cable_leg_curl: { q: 'standing cable leg curl hamstring', form: [
+      'Gleznieră la cablu jos, cu fața la aparat, prinde-te de suport.',
+      'Flexează genunchiul ducând călcâiul spre fesă.',
+      'Strânge spatele coapsei (ischio) la vârf.',
+      'Revino lent, controlat.'
+    ], mistakes: ['Folosești elan din șold.', 'Range scurt.', 'Cobori prea repede.'] },
+
+    calf_raise: { q: 'standing calf raise', form: [
+      'În picioare, vârfurile pe o treaptă, gantere în mâini.',
+      'Coboară călcâiele sub nivel (stretch).',
+      'Ridică-te pe vârfuri cât poți de sus (squeeze).',
+      'Tempo lent: 2s sus, 2s jos.'
+    ], mistakes: ['Range prea mic.', 'Te legeni cu elan.', 'Prea rapid.'] },
+
+    chest_fly: { q: 'cable chest fly', form: [
+      'Câte un mâner în fiecare mână, un pas în față, ușor aplecată.',
+      'Brațele ușor îndoite (fixe), deschise lateral.',
+      'Adu mâinile în față într-un arc, ca o îmbrățișare.',
+      'Strânge pieptul 1-2s, revino controlat la stretch.'
+    ], mistakes: ['Îndoi/întinzi coatele (devine împins).', 'Folosești elan.', 'Range prea mic.'] },
+
+    lat_pulldown: { q: 'lat pulldown', form: [
+      'Prinde bara mai lat decât umerii, stai dreaptă, ușor pe spate.',
+      'Trage bara spre partea de SUS a pieptului, coatele jos.',
+      'Strânge omoplații, fără să te legeni.',
+      'Revino controlat, brațele întinse sus.'
+    ], mistakes: ['Tragi din brațe, nu din spate.', 'Te legeni cu elan.', 'Bara în spatele capului.'] },
+
+    lat_raise: { q: 'dumbbell lateral raise', form: [
+      'Gantere pe lângă corp, ușor aplecată, coate ușor îndoite.',
+      'Ridică lateral până la nivelul umerilor.',
+      'Condu cu COATELE, nu cu mâinile; pumnii nu trec de umeri.',
+      'Coboară lent.'
+    ], mistakes: ['Folosești elan / ridici din trapez.', 'Ganterele peste umeri.', 'Coborâre prea rapidă.'] },
+
+    face_pulls: { q: 'cable face pull', form: [
+      'Funie la cablu la nivelul feței.',
+      'Trage funia spre frunte, coatele sus și în spate.',
+      'Rotește extern (mâinile spre urechi), strânge omoplații.',
+      'Revino controlat.'
+    ], mistakes: ['Tragi prea jos (spre piept).', 'Nu rotești extern.', 'Greutate prea mare cu elan.'] },
+
+    cable_crunch: { q: 'kneeling cable crunch abs', form: [
+      'Îngenunchează cu fața la cablu (funie sus), ține funia lângă cap.',
+      'Curbează coloana ducând coatele spre coapse (ABDOMENUL face mișcarea).',
+      'Strânge abdomenul jos; șoldul rămâne fix.',
+      'Revino lent, controlat.'
+    ], mistakes: ['Tragi din șold/brațe în loc de abdomen.', 'Range prea mic.', 'Spatele drept (nu curbezi coloana).'] },
+
+    pallof: { q: 'pallof press', form: [
+      'Lateral față de cablu (la nivelul pieptului), prinde mânerul la piept cu ambele mâini.',
+      'Întinde brațele drept în față, REZISTÂND rotației.',
+      'Ține 1-2s, revino la piept.',
+      'Core strâns tot timpul, nu te roti.'
+    ], mistakes: ['Lași corpul să se rotească spre cablu.', 'Folosești brațele în loc de core.', 'Te apleci.'] },
+
+    woodchops: { q: 'cable woodchop', form: [
+      'Lateral față de cablu, prinde mânerul cu ambele mâini.',
+      'Trage diagonal peste corp, rotind din TRUNCHI/core.',
+      'Brațele relativ întinse; mișcarea vine din core.',
+      'Controlează revenirea.'
+    ], mistakes: ['Tragi doar din brațe.', 'Prea repede, cu elan.', 'Nu rotești din trunchi.'] },
+
+    plank: { q: 'plank correct form', form: [
+      'Pe coate (sub umeri) și vârfuri, corp drept ca o scândură.',
+      'Strânge abdomenul și fesele, bazinul ușor retrovers.',
+      'Privirea în jos, gât neutru.',
+      'Respiră normal, ține poziția.'
+    ], mistakes: ['Lași șoldul să cadă (lombar).', 'Ridici fundul prea sus.', 'Ții respirația.'] },
+
+    knee_raises: { q: 'hanging knee raises', form: [
+      'Atârnă de bară, brațe întinse, umeri activi.',
+      'Ridică genunchii spre piept curbând bazinul (nu doar din șold).',
+      'Strânge abdomenul jos, coboară controlat.',
+      'Evită balansul.'
+    ], mistakes: ['Te legeni cu elan.', 'Ridici doar din șold.', 'Cobori prea repede.'] },
+
+    dead_hangs: { q: 'dead hang', form: [
+      'Atârnă de bară cu ambele mâini, brațe întinse.',
+      'Umeri ușor activi (nu complet pasivi), corp relaxat.',
+      'Respiră și ține cât poți (decompresie + grip).'
+    ], mistakes: ['Umeri complet pasivi de la început.', 'Te legeni.', 'Strângi excesiv (obosești repede).'] },
+
+    stretching: { q: 'full body stretching routine', form: [
+      'Întinderi statice ușoare, fără durere ascuțită.',
+      'Ține fiecare poziție 30-60s, respiră adânc.',
+      'Static, nu balistic (nu te legăna).'
+    ], mistakes: ['Forțezi până la durere.', 'Ții respirația.', 'Întinderi prea scurte.'] }
+  };
+  const ids = {
+    hip_thrust: ['hip_thrust_a', 'hip_thrust_b'],
+    sl_hip_thrust: ['sl_hip_thrust'],
+    goblet_squat: ['goblet_squat'],
+    sumo_goblet: ['sumo_goblet'],
+    bulgarian_split: ['bulgarian_split'],
+    reverse_lunge: ['reverse_lunge'],
+    walking_lunges: ['walking_lunges'],
+    rdl_db: ['rdl_db'],
+    cable_pull_through: ['cable_pull_through_a', 'cable_pull_through_c'],
+    glute_bridge: ['glute_act_bridge'],
+    frog_pumps: ['glute_act_frog'],
+    cable_kickback: ['glute_act_kickback', 'cable_kickback_b', 'cable_kickback_c'],
+    cable_leg_curl: ['cable_leg_curl'],
+    calf_raise: ['calf_raise_a', 'calf_raise_b'],
+    chest_fly: ['chest_fly'],
+    lat_pulldown: ['lat_pulldown'],
+    lat_raise: ['lat_raise'],
+    face_pulls: ['face_pulls'],
+    cable_crunch: ['cable_crunch_c', 'cable_crunch_mob', 'cable_crunch_uc'],
+    pallof: ['pallof_mob', 'pallof_uc'],
+    woodchops: ['woodchops_c', 'woodchops_mob'],
+    plank: ['plank_mob'],
+    knee_raises: ['knee_raises_mob', 'knee_raises_uc'],
+    dead_hangs: ['dead_hangs_mob'],
+    stretching: ['stretching_mob']
+  };
+  const out = {};
+  for (const key in ids) ids[key].forEach(id => { out[id] = guides[key]; });
+  return out;
+})();
+
 window.PROGRAM = PROGRAM;
+window.EXERCISE_FORM = EXERCISE_FORM;
 window.DAY_ORDER = DAY_ORDER;
 window.BONUS_MISSION_POOL = BONUS_MISSION_POOL;
 window.BOSS_MISSIONS = BOSS_MISSIONS;

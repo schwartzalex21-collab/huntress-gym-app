@@ -248,6 +248,32 @@ function closeWelcome() {
   saveState();
 }
 
+// Ghid „Forma corectă" — pași + greșeli (offline) + căutare YouTube
+function openFormGuide(exId) {
+  const modal = document.getElementById('form-modal');
+  if (!modal) return;
+  vibrate(10);
+  const meta = getExerciseMeta(exId);
+  const guide = (window.EXERCISE_FORM && window.EXERCISE_FORM[exId]) || null;
+  const q = (guide && guide.q) || String(meta.name || '').replace(/\s*[\(—–].*/, '').trim();
+  const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q + ' form tutorial');
+  let body;
+  if (guide) {
+    body = `<div class="form-section-label">PAȘI</div>`
+      + `<ol class="form-steps">${guide.form.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>`
+      + ((guide.mistakes && guide.mistakes.length)
+        ? `<div class="form-section-label danger">GREȘELI DE EVITAT</div><ul class="form-mistakes">${guide.mistakes.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
+        : '');
+  } else {
+    body = `<div class="form-empty">Exercițiu custom — nu am un ghid scris, dar poți vedea forma corectă pe YouTube. 🎥</div>`;
+  }
+  modal.querySelector('#form-title').textContent = meta.name || 'Forma corectă';
+  modal.querySelector('#form-body').innerHTML = body;
+  modal.querySelector('#form-yt').onclick = () => window.open(ytUrl, '_blank');
+  modal.classList.add('active');
+}
+function closeFormModal() { document.getElementById('form-modal').classList.remove('active'); }
+
 // =================== QUESTS (daily) — FĂRĂ Wim Hof / Cold ===================
 const QUESTS = {
   morning_routine: {
@@ -1386,7 +1412,7 @@ function renderExerciseCard(ex, idx, workout) {
       <div class="exercise-header">
         <div style="flex:1; min-width:0;">
           <div class="exercise-num">#${String(idx+1).padStart(2,'0')} • ${ex.target || 'Custom'}</div>
-          <div class="exercise-name">${escapeHtml(ex.name)}</div>
+          <div class="exercise-name">${escapeHtml(ex.name)}${((window.EXERCISE_FORM && window.EXERCISE_FORM[ex.id]) || String(ex.id).startsWith('custom_')) ? ` <button class="form-btn" onclick="openFormGuide('${ex.id}')" aria-label="Vezi forma corectă" title="Forma corectă">?</button>` : ''}</div>
           <div class="exercise-target">${escapeHtml(ex.note || '')}</div>
           ${overload ? `<div class="overload-hint">${overload}</div>` : ''}
         </div>
@@ -1970,7 +1996,7 @@ function renderHunter(el) {
       <button class="danger-btn" onclick="resetAllData()">🗑 Șterge TOATE datele</button>
     </div>
 
-    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v5.0 • POWERED BY YOU</div>
+    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v6.0 • POWERED BY YOU</div>
   `;
 }
 
