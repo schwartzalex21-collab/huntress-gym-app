@@ -36,6 +36,7 @@ let currentPage = 'home';
 let currentWorkoutDate = null;
 let currentDayKey = null;
 let activeQuestId = null;
+let _justCompletedQuestId = null, _justCompletedBonusId = null; // animație one-shot la completare
 
 // =================== STORAGE ===================
 const STORAGE_KEY = 'huntress_app_v1';
@@ -73,6 +74,21 @@ function saveState() {
     if (e.name === 'QuotaExceededError') showToast('❌ Spațiu insuficient!');
     else showToast('❌ Eroare la salvare!');
   }
+}
+
+// =================== SCHEMA MIGRATIONS ===================
+const SCHEMA_VERSION = 3;
+function migrateState() {
+  const from = state.version || 1;
+  if (from >= SCHEMA_VERSION) return;
+  // from < 3: streak ca reset real (nu decay ×0.7). Păstrează streak/shields salvate și forțează
+  //           reevaluarea rollover-ului; recalculează din habits doar dacă nu există streak salvat.
+  if (from < 3) {
+    if (!state.system.lastPerfectDate) recomputeStreakFromHabits();
+    state.system.lastCheckDate = null;
+  }
+  state.version = SCHEMA_VERSION;
+  saveState();
 }
 
 // =================== HELPERS ===================
@@ -121,6 +137,116 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3500);
 }
 function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
+
+// ===== PREMIUM JUICE =====
+let _lastPointer = { x: 0, y: 0 };
+document.addEventListener('pointerdown', (e) => { _lastPointer = { x: e.clientX, y: e.clientY }; }, { passive: true, capture: true });
+
+function floatXP(amount) {
+  if (!amount || amount <= 0) return;
+  const x = _lastPointer.x || window.innerWidth / 2;
+  const y = _lastPointer.y || window.innerHeight * 0.4;
+  const el = document.createElement('div');
+  el.className = 'xp-float' + (amount >= 100 ? ' big' : '');
+  el.textContent = `+${amount} XP`;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+function countUp(el, to, { from = 0, duration = 650, format = (v) => Math.round(v).toString() } = {}) {
+  if (!el) return;
+  to = Number(to) || 0;
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = format(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function runCountUps() {
+  document.querySelectorAll('[data-countup]').forEach(el => {
+    const to = Number(el.dataset.countup) || 0;
+    const fmt = el.dataset.countupFmt === 'k' ? formatNumber : (v) => Math.round(v).toString();
+    countUp(el, to, { from: 0, duration: 650, format: fmt });
+  });
+}
+
+// ===== CELEBRARE — particule + flash (paletă roz) =====
+function burstParticles(x, y, { count = 30, colors = ['#ff7a8a','#ffb380','#ff5d8f','#ffffff'], spread = 170, power = 1 } = {}) {
+  const layer = document.createElement('div');
+  layer.className = 'burst-layer';
+  layer.style.left = x + 'px';
+  layer.style.top = y + 'px';
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'burst-particle';
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+    const dist = (spread * 0.35 + Math.random() * spread * 0.65) * power;
+    p.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+    p.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(1) + 'px');
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const size = (5 + Math.random() * 6).toFixed(1);
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.animationDelay = Math.floor(Math.random() * 70) + 'ms';
+    if (Math.random() > 0.5) p.style.borderRadius = '50%';
+    layer.appendChild(p);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 1500);
+}
+
+function screenFlash(color = 'rgba(255,122,138,0.4)') {
+  const f = document.createElement('div');
+  f.className = 'screen-flash';
+  f.style.background = `radial-gradient(circle at 50% 44%, ${color} 0%, transparent 70%)`;
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 600);
+}
+
+// ===== ICONIȚE SVG (gradient roz, consistente cross-platform) =====
+const ICON_SHIELD = `<svg viewBox="0 0 24 24" class="svg-shield" aria-hidden="true"><path fill="url(#grad-shield)" d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-3z"/></svg>`;
+const ICON_GEM = `<svg viewBox="0 0 24 24" class="svg-gem" aria-hidden="true"><path fill="currentColor" d="M6 3h12l3.5 5.5L12 21 2.5 8.5z"/><path fill="#fff" opacity="0.22" d="M6 3h12l-6 5.5z"/></svg>`;
+
+// Confirmare tematică (înlocuiește confirm() nativ) — întoarce Promise<boolean>
+function showConfirm({ title = 'Confirmare', body = '', confirmText = 'CONFIRMĂ', cancelText = 'ANULEAZĂ', danger = false } = {}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirm-modal');
+    if (!modal) { resolve(window.confirm(body)); return; }
+    modal.querySelector('#confirm-title').textContent = title;
+    modal.querySelector('#confirm-body').textContent = body;
+    const okBtn = modal.querySelector('#confirm-ok');
+    const cancelBtn = modal.querySelector('#confirm-cancel');
+    okBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
+    okBtn.classList.toggle('danger', danger);
+    vibrate(20);
+    const cleanup = (val) => { modal.classList.remove('active'); okBtn.onclick = null; cancelBtn.onclick = null; modal.onclick = null; resolve(val); };
+    okBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+    modal.onclick = (e) => { if (e.target === modal) cleanup(false); };
+    modal.classList.add('active');
+  });
+}
+
+// Onboarding — bun venit la prima deschidere
+function showWelcome() {
+  const m = document.getElementById('welcome-modal');
+  if (!m) return;
+  vibrate([60, 40, 60]);
+  m.classList.add('active');
+  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.38, { count: 34, power: 1.3, colors: ['#ff7a8a','#ffb380','#ff5d8f','#ffffff'] }), 280);
+}
+function closeWelcome() {
+  const m = document.getElementById('welcome-modal');
+  if (m) m.classList.remove('active');
+  state.system.welcomed = true;
+  saveState();
+}
 
 // =================== QUESTS (daily) — FĂRĂ Wim Hof / Cold ===================
 const QUESTS = {
@@ -210,6 +336,7 @@ function addXP(amount, reason, statKey) {
   }
   saveState();
   updateGlobalXPBar();
+  if (amount > 0) floatXP(amount);
   if (amount !== 0) {
     const sign = amount >= 0 ? '+' : '';
     showToast(`${sign}${amount} XP (${reason})`);
@@ -290,11 +417,19 @@ function toggleHabit(date, habitId) {
   state.habits[date][habitId] = isDone;
   const q = QUESTS[habitId];
   if (isDone) {
+    _justCompletedQuestId = habitId;
     addXP(q.xp, q.name, q.stat);
     unlockAchievement('first_blood');
     checkPerfectDay(date);
   } else {
     state.system.xp = Math.max(0, state.system.xp - q.xp);
+    // Dacă ziua era marcată perfectă dar acum nu mai e: revocă bonusul + recalculează streak
+    const h = state.habits[date];
+    if (h.perfect_claimed && !isPerfectDay(h)) {
+      h.perfect_claimed = false;
+      state.system.xp = Math.max(0, state.system.xp - 50);
+      recomputeStreakFromHabits();
+    }
     saveState();
     updateGlobalXPBar();
   }
@@ -363,6 +498,13 @@ function recomputeStreakFromHabits() {
     state.system.lastPerfectDate = null;
     return;
   }
+  // Streak-ul e "viu" DOAR dacă ultima zi perfectă e azi sau ieri; altfel lanțul e rupt → 0
+  const yesterday = addDaysKey(today, -1);
+  if (lastPerfect < yesterday) {
+    state.system.perfectStreak = 0;
+    state.system.lastPerfectDate = lastPerfect;
+    return;
+  }
   let streak = 0;
   let cursor = lastPerfect;
   while (isPerfectDay(state.habits[cursor]) && streak < 10000) {
@@ -376,26 +518,10 @@ function recomputeStreakFromHabits() {
 
 function manualRecomputeStreak() {
   const oldStreak = state.system.perfectStreak;
-  const today = todayKey();
-  let lastPerfect = null;
-  let c = today;
-  for (let i = 0; i < 3650; i++) {
-    if (isPerfectDay(state.habits[c])) { lastPerfect = c; break; }
-    c = addDaysKey(c, -1);
-  }
-  let streak = 0;
-  if (lastPerfect) {
-    let cursor = lastPerfect;
-    while (isPerfectDay(state.habits[cursor]) && streak < 10000) {
-      streak++;
-      cursor = addDaysKey(cursor, -1);
-    }
-  }
-  state.system.perfectStreak = streak;
-  state.system.lastPerfectDate = lastPerfect;
+  recomputeStreakFromHabits();
   saveState();
   render();
-  showToast(`🍑 Streak recalculat: ${oldStreak} → ${streak} zile`);
+  showToast(`🍑 Streak recalculat: ${oldStreak} → ${state.system.perfectStreak} zile`);
 }
 
 // =================== STREAK ROLLOVER & SHIELDS ===================
@@ -409,16 +535,18 @@ function processDailyRollover() {
       let missed = 0;
       let cursor = addDaysKey(last, 1);
       while (cursor <= yesterday) { missed++; cursor = addDaysKey(cursor, 1); }
+      // Fiecare zi ratată consumă un shield; când nu mai sunt, streak-ul se rupe (reset la 0)
       while (missed > 0 && state.system.perfectStreak > 0) {
         if (state.system.shields > 0) {
           state.system.shields--;
           state.system.shieldsConsumedTotal = (state.system.shieldsConsumedTotal || 0) + 1;
           unlockAchievement('untouchable');
           if (state.system.shieldsConsumedTotal >= 3) unlockAchievement('shield_save_3');
+          missed--;
         } else {
-          state.system.perfectStreak = Math.round(state.system.perfectStreak * 0.7);
+          state.system.perfectStreak = 0;
+          break;
         }
-        missed--;
       }
     }
   }
@@ -477,31 +605,48 @@ function ensureBonusForToday() {
 function toggleBonusMission(id) {
   vibrate(15);
   const m = state.bonusMissions.missions.find(x => x.id === id);
-  if (!m || m.completed) return;
-  m.completed = true;
-  state.system.bonusCompletedTotal = (state.system.bonusCompletedTotal || 0) + 1;
-  if (m.rarity === 'rare') state.system.rareCompletedTotal = (state.system.rareCompletedTotal || 0) + 1;
-  if (m.rarity === 'legendary') state.system.legendaryCompletedTotal = (state.system.legendaryCompletedTotal || 0) + 1;
-  addXP(m.xp, `Bonus: ${getBonusMeta(id).title}`, m.stat);
-  if (m.rarity === 'rare') {
-    if (state.system.shields < 3) {
-      state.system.shields++;
-      showToast(`🛡 +1 Shield ${state.system.shields}/3`);
-      if (state.system.shields >= 3) unlockAchievement('triple_shield');
+  if (!m) return;
+  const today = todayKey();
+  if (!state.habits[today]) state.habits[today] = {};
+
+  if (!m.completed) {
+    // ----- COMPLETARE -----
+    m.completed = true;
+    _justCompletedBonusId = id;
+    state.system.bonusCompletedTotal = (state.system.bonusCompletedTotal || 0) + 1;
+    state.habits[today].bonusDone = (state.habits[today].bonusDone || 0) + 1; // contor per-zi pt raport săptămânal
+    if (m.rarity === 'rare') state.system.rareCompletedTotal = (state.system.rareCompletedTotal || 0) + 1;
+    if (m.rarity === 'legendary') state.system.legendaryCompletedTotal = (state.system.legendaryCompletedTotal || 0) + 1;
+    addXP(m.xp, `Bonus: ${getBonusMeta(id).title}`, m.stat);
+    if (m.rarity === 'rare' || m.rarity === 'legendary') {
+      if (state.system.shields < 3) {
+        state.system.shields++;
+        showToast(`🛡 +1 Shield ${state.system.shields}/3`);
+        if (state.system.shields >= 3) unlockAchievement('triple_shield');
+      }
     }
+    if (m.rarity === 'legendary') unlockAchievement('legendary_pull');
+    // Cumulative bonus
+    const total = state.system.bonusCompletedTotal;
+    if (total >= 50) unlockAchievement('bonus_hunter');
+    if (total >= 200) unlockAchievement('bonus_200');
+    if (total >= 500) unlockAchievement('bonus_500');
+    // Per rarity
+    if ((state.system.rareCompletedTotal || 0) >= 25) unlockAchievement('rare_25');
+    if ((state.system.rareCompletedTotal || 0) >= 100) unlockAchievement('rare_100');
+    if ((state.system.legendaryCompletedTotal || 0) >= 5) unlockAchievement('legendary_5');
+    if ((state.system.legendaryCompletedTotal || 0) >= 25) unlockAchievement('legendary_25');
+    addStatXP('WIL', Math.round(m.xp * 0.25));
+  } else {
+    // ----- ANULARE (undo la click greșit) -----
+    m.completed = false;
+    state.system.bonusCompletedTotal = Math.max(0, (state.system.bonusCompletedTotal || 0) - 1);
+    state.habits[today].bonusDone = Math.max(0, (state.habits[today].bonusDone || 0) - 1);
+    if (m.rarity === 'rare') state.system.rareCompletedTotal = Math.max(0, (state.system.rareCompletedTotal || 0) - 1);
+    if (m.rarity === 'legendary') state.system.legendaryCompletedTotal = Math.max(0, (state.system.legendaryCompletedTotal || 0) - 1);
+    state.system.xp = Math.max(0, state.system.xp - m.xp);
+    // Notă: stat XP și shield-urile nu se revocă (consistent cu dezbifarea misiunilor principale)
   }
-  if (m.rarity === 'legendary') unlockAchievement('legendary_pull');
-  // Cumulative bonus
-  const total = state.system.bonusCompletedTotal;
-  if (total >= 50) unlockAchievement('bonus_hunter');
-  if (total >= 200) unlockAchievement('bonus_200');
-  if (total >= 500) unlockAchievement('bonus_500');
-  // Per rarity
-  if ((state.system.rareCompletedTotal || 0) >= 25) unlockAchievement('rare_25');
-  if ((state.system.rareCompletedTotal || 0) >= 100) unlockAchievement('rare_100');
-  if ((state.system.legendaryCompletedTotal || 0) >= 5) unlockAchievement('legendary_5');
-  if ((state.system.legendaryCompletedTotal || 0) >= 25) unlockAchievement('legendary_25');
-  addStatXP('WIL', Math.round(m.xp * 0.25));
   saveState();
   render();
 }
@@ -549,6 +694,8 @@ function completeBoss() {
   if (b >= 5) unlockAchievement('boss_5');
   if (b >= 10) unlockAchievement('boss_10');
   if (b >= 25) unlockAchievement('boss_25');
+  screenFlash('rgba(255,93,143,0.42)');
+  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.5, { count: 48, power: 1.7, colors: ['#ff5d8f','#ff7a8a','#ffb380','#ffffff'] }), 90);
   saveState();
   render();
 }
@@ -601,6 +748,15 @@ function showAchievementModal(id) {
   const particles = modal.querySelector('.particles');
   if (particles) { particles.style.animation = 'none'; void particles.offsetWidth; particles.style.animation = ''; }
   modal.classList.add('active');
+  setTimeout(() => {
+    const legendary = a.rarity === 'legendary';
+    burstParticles(window.innerWidth / 2, window.innerHeight * 0.4, {
+      count: legendary ? 46 : 26,
+      power: legendary ? 1.6 : 1.05,
+      colors: legendary ? ['#ff5d8f','#ffd9b0','#ffffff','#ffb380'] : ['#ff7a8a','#ffb3c1','#ffffff']
+    });
+    if (legendary) screenFlash('rgba(255,93,143,0.35)');
+  }, 200);
 }
 
 function closeAchievementModal() {
@@ -627,7 +783,8 @@ function getWeeklyData() {
     const h = state.habits[d] || {};
     const mainDone = isPerfectDay(h);
     const main = ['morning_routine','prayer_am','affirmations','gratitude_pm','workout_xp_claimed'].filter(k => h[k]).length;
-    const bonus = (state.bonusMissions.date === d) ? state.bonusMissions.missions.filter(m => m.completed).length : 0;
+    let bonus = h.bonusDone || 0;
+    if (d === today && state.bonusMissions.date === d) bonus = Math.max(bonus, state.bonusMissions.missions.filter(m => m.completed).length);
     days.push({ date: d, main, mainDone, bonus, total: main + bonus });
   }
   const perfect = days.filter(d => d.mainDone).length;
@@ -677,7 +834,7 @@ function openWeeklyReport() {
       <div class="weekly-quote">${data.quote}</div>
       ${data.allPerfect ? `
         <div style="text-align:center; padding: 12px; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 10px; margin-bottom: 12px;">
-          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--gold);">🌹 PERFECT WEEK!</div>
+          <div style="font-family: 'Poppins', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--gold);">🌹 PERFECT WEEK!</div>
           <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Toate 7 zile cu misiunile principale complete.</div>
         </div>
       ` : ''}
@@ -704,18 +861,23 @@ function getExerciseMeta(exId) {
 }
 
 function computeTotalKg(set) {
-  const kg = parseFloat(set.kg) || 0;
+  const kg = parseFloat(String(set.kg).replace(',', '.')) || 0;
   if (set.unit === 'side') return state.settings.barWeight + kg * 2;
   if (set.unit === 'db') return kg * 2;
   return kg;
 }
 
 function displayKg(set) {
-  const kg = parseFloat(set.kg) || 0;
+  const kg = parseFloat(String(set.kg).replace(',', '.')) || 0;
   if (kg === 0) return '—';
   if (set.unit === 'side') return `${kg}×2 + ${state.settings.barWeight}`;
   if (set.unit === 'db') return `${kg} db`;
   return `${kg}`;
+}
+
+// Volum exact — fără rotunjire la întreg, dar fără zecimale inutile (235, 23.5, 70.5)
+function fmtVol(n) {
+  return String(Math.round(n * 100) / 100);
 }
 
 function findLastExerciseEntry(exId, excludeDate) {
@@ -764,6 +926,10 @@ function showLevelUpModal(newLevel) {
   rankEl.style.borderColor = rank.color;
   rankEl.style.boxShadow = rank.glow || 'none';
   modal.classList.add('active');
+  setTimeout(() => {
+    screenFlash('rgba(255,179,128,0.40)');
+    burstParticles(window.innerWidth / 2, window.innerHeight * 0.42, { count: 42, power: 1.5, colors: ['#ffb380','#ffd9b0','#ff7a8a','#ffffff'] });
+  }, 140);
 }
 function closeLevelUpModal() { document.getElementById('levelup-modal').classList.remove('active'); }
 
@@ -839,9 +1005,12 @@ function showStatDetail(key) {
 }
 
 // =================== NAVIGATION ===================
+let _navRender = false; // true doar la schimbarea paginii — controlează scroll-to-top + animația de intrare
+
 function navigate(page) {
   currentPage = page;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
+  _navRender = true;
   render();
 }
 
@@ -849,8 +1018,7 @@ function render() {
   const el = document.getElementById('page-content');
   document.getElementById('date-pill').textContent = formatDate(todayKey()).toUpperCase();
   updateGlobalXPBar();
-  el.className = 'fade-in';
-  void el.offsetWidth;
+  if (_navRender) { el.className = 'fade-in'; void el.offsetWidth; }
   ensureBonusForToday();
   ensureBossForWeek();
   if (currentPage === 'home') renderHome(el);
@@ -859,7 +1027,9 @@ function render() {
   else if (currentPage === 'rank') renderRank(el);
   else if (currentPage === 'achievements') renderAchievements(el);
   else if (currentPage === 'hunter') renderHunter(el);
-  window.scrollTo(0, 0);
+  if (_navRender) { runCountUps(); window.scrollTo(0, 0); }
+  _navRender = false;
+  _justCompletedQuestId = null; _justCompletedBonusId = null;
 }
 
 // =================== AZI / HOME ===================
@@ -915,7 +1085,7 @@ function renderHome(el) {
       <div>
         <div class="streak-label" style="text-align:right; margin-bottom:4px;">Shields</div>
         <div class="shield-stack">
-          ${[0,1,2].map(i => `<div class="shield-icon ${i < shields ? 'active' : ''}">🛡</div>`).join('')}
+          ${[0,1,2].map(i => `<div class="shield-icon ${i < shields ? 'active' : ''}">${ICON_SHIELD}</div>`).join('')}
         </div>
       </div>
     </div>
@@ -960,13 +1130,13 @@ function renderHome(el) {
       `;
     }
     return `
-      <div class="quest-item ${done ? 'done' : ''}" onclick="openQuestModal('${q.id}')">
+      <div class="quest-item ${done ? 'done' : ''}${_justCompletedQuestId === q.id ? ' just-completed' : ''}" onclick="openQuestModal('${q.id}')">
         <div class="quest-icon">${q.icon}</div>
         <div class="quest-info">
           <div class="quest-name">${q.name}</div>
           <div class="quest-xp">+${q.xp} XP • ${q.stat}</div>
         </div>
-        <div class="quest-checkbox" onclick="event.stopPropagation(); toggleHabit('${today}', '${q.id}')">
+        <div class="quest-checkbox" role="button" aria-label="Bifează misiunea" onclick="event.stopPropagation(); toggleHabit('${today}', '${q.id}')">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7"/></svg>
         </div>
       </div>
@@ -978,8 +1148,8 @@ function renderHome(el) {
   const bonusHtml = state.bonusMissions.missions.map(m => {
     const meta = getBonusMeta(m.id);
     return `
-      <div class="bonus-mission-card rarity-${m.rarity} ${m.completed ? 'done' : ''}" onclick="openBonusModal('${m.id}')">
-        <div class="bonus-icon">${m.rarity === 'legendary' ? '💎' : m.rarity === 'rare' ? '🌹' : '✦'}</div>
+      <div class="bonus-mission-card rarity-${m.rarity} ${m.completed ? 'done' : ''}${_justCompletedBonusId === m.id ? ' just-completed' : ''}" onclick="openBonusModal('${m.id}')">
+        <div class="bonus-icon">${ICON_GEM}</div>
         <div class="bonus-info">
           <div class="bonus-title">${meta.title}</div>
           <div class="bonus-meta">
@@ -988,7 +1158,7 @@ function renderHome(el) {
             <span>• ${m.stat}</span>
           </div>
         </div>
-        <div class="quest-checkbox" onclick="event.stopPropagation(); toggleBonusMission('${m.id}')">
+        <div class="quest-checkbox" role="button" aria-label="Bifează bonusul" onclick="event.stopPropagation(); toggleBonusMission('${m.id}')">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7"/></svg>
         </div>
       </div>
@@ -1031,7 +1201,7 @@ function renderHome(el) {
         <div class="section-subtitle" style="margin-bottom:4px;">✨ Antrenament în Curs</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
           <div>
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1.5px;">${window.PROGRAM[todayWorkout.dayKey]?.name || 'Custom'}</div>
+            <div style="font-family: 'Poppins', sans-serif; font-size: 26px; letter-spacing: 1.5px;">${window.PROGRAM[todayWorkout.dayKey]?.name || 'Custom'}</div>
             <div style="font-size: 12px; color: var(--text-secondary); margin-top:2px;">Apasă pentru a continua</div>
           </div>
           <svg fill="none" stroke="var(--accent)" viewBox="0 0 24 24" width="28" height="28" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -1094,7 +1264,7 @@ function renderTomorrowPreview() {
     const meta = window.BONUS_MISSION_POOL.find(x => x.id === m.id) || { title: m.id, desc: '' };
     return `
       <div class="bonus-mission-card rarity-${m.rarity}" style="cursor: default; opacity: 0.85;">
-        <div class="bonus-icon">${m.rarity === 'legendary' ? '💎' : m.rarity === 'rare' ? '🌹' : '✦'}</div>
+        <div class="bonus-icon">${ICON_GEM}</div>
         <div class="bonus-info">
           <div class="bonus-title">${meta.title}</div>
           <div class="bonus-meta">
@@ -1110,10 +1280,10 @@ function renderTomorrowPreview() {
   const bossHtml = bossMission ? `
     <div style="background: linear-gradient(135deg, rgba(255,74,94,0.05), rgba(255,179,128,0.04)); border: 1.5px solid var(--danger); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--danger);">👑 BOSS DAY MÂINE</div>
+        <div style="font-family: 'Poppins', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--danger);">👑 BOSS DAY MÂINE</div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold);">+250 XP</div>
       </div>
-      <div style="font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--text-primary); letter-spacing: 1px; margin-bottom: 4px;">${bossMission.title}</div>
+      <div style="font-family: 'Poppins', sans-serif; font-size: 18px; color: var(--text-primary); letter-spacing: 1px; margin-bottom: 4px;">${bossMission.title}</div>
       <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${bossMission.desc}</div>
     </div>
   ` : '';
@@ -1150,12 +1320,17 @@ function startBossCountdown() {
 }
 
 // =================== WORKOUT ===================
-function startWorkout(dayKey) {
+async function startWorkout(dayKey) {
   const today = todayKey();
   if (!state.workouts[today]) {
     state.workouts[today] = { dayKey, exercises: {} };
   } else if (state.workouts[today].dayKey !== dayKey) {
-    if (!confirm(`Astăzi ai început deja ${window.PROGRAM[state.workouts[today].dayKey]?.name || 'un antrenament'}. Schimbi cu ${window.PROGRAM[dayKey].name}? (datele se vor pierde)`)) return;
+    const ok = await showConfirm({
+      title: 'Schimbi antrenamentul?',
+      body: `Astăzi ai început deja ${window.PROGRAM[state.workouts[today].dayKey]?.name || 'un antrenament'}. Dacă pornești ${window.PROGRAM[dayKey].name}, datele de azi se pierd.`,
+      confirmText: 'SCHIMBĂ', danger: true
+    });
+    if (!ok) return;
     state.workouts[today] = { dayKey, exercises: {} };
   }
   saveState();
@@ -1166,11 +1341,12 @@ function openWorkout(dateKey, dayKey) {
   currentWorkoutDate = dateKey;
   currentDayKey = dayKey;
   currentPage = 'workout';
+  _navRender = true;
   render();
 }
 
 function renderWorkout(el) {
-  const day = window.PROGRAM[currentDayKey];
+  const day = window.PROGRAM[currentDayKey] || { name: 'Antrenament', focus: 'Custom', exercises: [] };
   const workout = state.workouts[currentWorkoutDate] || { dayKey: currentDayKey, exercises: {} };
   const programIds = day.exercises.map(e => e.id);
   const customIds = Object.keys(workout.exercises).filter(id => !programIds.includes(id));
@@ -1260,7 +1436,7 @@ function renderUnitToggle(exId, unit) {
 
 function renderSetRow(exId, sIdx, set) {
   const total = set.kg && set.reps ? computeTotalKg(set) : 0;
-  const vol = total && set.reps ? Math.round(total * parseFloat(set.reps)) : 0;
+  const vol = total && set.reps ? total * parseFloat(set.reps) : 0;
   const done = set.kg && set.reps;
   let gK = '', gR = '';
   const last = findLastExerciseEntry(exId, currentWorkoutDate);
@@ -1268,10 +1444,10 @@ function renderSetRow(exId, sIdx, set) {
   return `
     <div class="set-row" data-sidx="${sIdx}">
       <div class="set-num">${sIdx+1}</div>
-      <input type="number" inputmode="decimal" step="0.5" class="set-input ${done?'done':''}" value="${set.kg||''}" placeholder="${gK||'0'}" onfocus="this.select()" enterkeyhint="next" onchange="updateSet('${exId}',${sIdx},'kg',this.value)">
+      <input type="text" inputmode="decimal" autocomplete="off" class="set-input ${done?'done':''}" value="${set.kg||''}" placeholder="${gK||'0'}" onfocus="this.select()" enterkeyhint="next" onchange="updateSet('${exId}',${sIdx},'kg',this.value)">
       <input type="number" inputmode="numeric" class="set-input ${done?'done':''}" value="${set.reps||''}" placeholder="${gR||'0'}" onfocus="this.select()" enterkeyhint="next" onchange="updateSet('${exId}',${sIdx},'reps',this.value)">
-      <div class="set-vol">${vol||'—'}</div>
-      <button class="set-delete" onclick="deleteSet('${exId}',${sIdx})"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+      <div class="set-vol">${vol ? fmtVol(vol) : '—'}</div>
+      <button class="set-delete" onclick="deleteSet('${exId}',${sIdx})" aria-label="Șterge set"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
   `;
 }
@@ -1298,17 +1474,17 @@ function updateSet(exId, sIdx, field, value) {
     const meta = getExerciseMeta(exId);
     exData.sets[sIdx] = { kg:'', reps:'', unit: meta.defaultUnit || 'total' };
   }
-  exData.sets[sIdx][field] = value;
+  exData.sets[sIdx][field] = (field === 'kg' && typeof value === 'string') ? value.replace(',', '.') : value;
   saveState();
   const c = document.getElementById(`sets-${exId}`);
   if (c) {
     const set = exData.sets[sIdx];
     const total = set.kg && set.reps ? computeTotalKg(set) : 0;
-    const vol = total && set.reps ? Math.round(total * parseFloat(set.reps)) : 0;
+    const vol = total && set.reps ? total * parseFloat(set.reps) : 0;
     const done = set.kg && set.reps;
     c.querySelectorAll(`[data-sidx="${sIdx}"] .set-input`).forEach(i => i.classList.toggle('done', done));
     const v = c.querySelector(`[data-sidx="${sIdx}"] .set-vol`);
-    if (v) v.textContent = vol || '—';
+    if (v) v.textContent = vol ? fmtVol(vol) : '—';
     const card = document.getElementById(`card-${exId}`);
     if (card && exData.sets.every(s => s.kg && s.reps)) {
       card.classList.add('active-exercise');
@@ -1435,16 +1611,16 @@ function renderProgress(el) {
     <div class="metric-stats">
       <div class="metric-card">
         <div class="metric-label">Antrenamente</div>
-        <div class="metric-value">${totals.workouts}</div>
+        <div class="metric-value" data-countup="${totals.workouts}">${totals.workouts}</div>
         <div class="metric-delta ${totals.workoutsDelta>0?'up':totals.workoutsDelta<0?'down':'flat'}">${totals.workoutsDelta>0?'↗':totals.workoutsDelta<0?'↘':'—'} vs anterior</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Volum (kg)</div>
-        <div class="metric-value">${formatNumber(totals.volume)}</div>
+        <div class="metric-value" data-countup="${totals.volume}" data-countup-fmt="k">${formatNumber(totals.volume)}</div>
         <div class="metric-delta ${totals.volumeDelta>0?'up':totals.volumeDelta<0?'down':'flat'}">${totals.volumeDelta>0?'+':''}${formatNumber(totals.volumeDelta)}</div>
       </div>
-      <div class="metric-card"><div class="metric-label">Seturi</div><div class="metric-value">${totals.sets}</div></div>
-      <div class="metric-card"><div class="metric-label">Reps</div><div class="metric-value">${formatNumber(totals.reps)}</div></div>
+      <div class="metric-card"><div class="metric-label">Seturi</div><div class="metric-value" data-countup="${totals.sets}">${totals.sets}</div></div>
+      <div class="metric-card"><div class="metric-label">Reps</div><div class="metric-value" data-countup="${totals.reps}" data-countup-fmt="k">${formatNumber(totals.reps)}</div></div>
     </div>
     <div class="section-subtitle">EVOLUȚIE EXERCIȚII</div>
     <input type="text" class="exercise-search" placeholder="🔍 Caută exercițiu..." value="${escapeHtml(progressSearch)}" oninput="setProgressSearch(this.value)">
@@ -1486,7 +1662,7 @@ function renderProgressList(allEx, cutoff) {
     })
     .sort((a,b) => a[1].name.localeCompare(b[1].name));
   if (!filtered.length) {
-    return `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><div>Niciun exercițiu cu date încă</div></div>`;
+    return `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><div class="empty-title">FĂRĂ DATE ÎNCĂ</div><div class="empty-sub">✨ Loghează un antrenament ca să-ți apară evoluția aici.</div></div>`;
   }
   return filtered.map(([id, d]) => {
     const inR = d.entries.filter(e => !cutoff || e.date >= cutoff).sort((a,b) => a.date.localeCompare(b.date));
@@ -1581,12 +1757,12 @@ function computeTotals(cutoff) {
 
 function formatNumber(n) {
   if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace('.0','') + 'k';
-  return Math.round(n).toString();
+  return String(Math.round(n * 10) / 10); // exact până la 1 zecimală (întregii rămân întregi)
 }
 
 function renderHistoryList() {
   const dates = Object.keys(state.workouts).filter(d => hasAnyData(state.workouts[d])).sort().reverse().slice(0, 12);
-  if (!dates.length) return `<div class="empty-state"><div>Niciun antrenament încă</div></div>`;
+  if (!dates.length) return `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h4v16H6zM14 4h4v16h-4zM2 12h4M18 12h4M10 12h4"/></svg><div class="empty-title">ISTORIC GOL</div><div class="empty-sub">✨ Niciun antrenament salvat. Alege o zi și începe.</div></div>`;
   return dates.map(d => {
     const w = state.workouts[d];
     const day = window.PROGRAM[w.dayKey];
@@ -1622,7 +1798,7 @@ function renderRank(el) {
     <div class="section-title">Rang</div>
     <div class="rank-hero">
       <div class="rank-hero-badge" style="color:${rank.color}; border-color:${rank.color}; box-shadow:${rank.glow||'none'}; text-shadow:${rank.glow||'none'};">${rank.name}</div>
-      <div class="rank-hero-level" style="color:${rank.color}; text-shadow: ${rank.glow || '0 0 18px var(--accent-glow)'};">${lvl}</div>
+      <div class="rank-hero-level" data-countup="${lvl}" style="color:${rank.color}; text-shadow: ${rank.glow || '0 0 18px var(--accent-glow)'};">${lvl}</div>
       <div class="rank-hero-label">Huntress Level</div>
       <div class="rank-xp-bar"><div class="rank-xp-fill" style="width:${Math.min(100,(state.system.xp/req)*100)}%;"></div></div>
       <div class="rank-xp-text">${state.system.xp} / ${req} XP</div>
@@ -1686,7 +1862,7 @@ function renderAchievements(el) {
   el.innerHTML = `
     <div class="section-title">Badges</div>
     <div class="badges-hero">
-      <div class="badges-hero-num">${unlocked}<span style="font-size:32px; color: var(--text-tertiary);">/${total}</span></div>
+      <div class="badges-hero-num"><span data-countup="${unlocked}">${unlocked}</span><span style="font-size:32px; color: var(--text-tertiary);">/${total}</span></div>
       <div class="badges-hero-label">ACHIEVEMENTS DEBLOCATE</div>
       <div class="badges-progress-bar"><div class="badges-progress-fill" style="width:${pct}%"></div></div>
       <div class="badges-rarity-row">
@@ -1732,7 +1908,7 @@ function renderHunter(el) {
         return `
           <div class="hunter-stat" onclick="showStatDetail('${k}')">
             <div class="stat-code">${k}</div>
-            <div class="stat-value-big" style="color:${tier.color}; text-shadow:${tier.glow};">${s.level}</div>
+            <div class="stat-value-big" data-countup="${s.level}" style="color:${tier.color}; text-shadow:${tier.glow};">${s.level}</div>
             <div class="stat-bar-vertical"><div class="stat-bar-fill-v" style="height:${statPct(k)}%; background: linear-gradient(180deg, ${tier.color}, var(--accent));"></div></div>
             <div class="stat-tier" style="color:${tier.color};">${tier.name}</div>
             <div class="stat-label-bottom">${statLabel(k)}</div>
@@ -1747,7 +1923,7 @@ function renderHunter(el) {
     <div class="card" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; margin-top: 14px;" onclick="navigate('achievements')">
       <div>
         <div class="section-subtitle" style="margin-bottom:4px;">🌹 Badges</div>
-        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); letter-spacing:1.5px;">${Object.keys(state.achievements).length} / ${Object.keys(ach).length} <span style="font-size:11px; color:var(--text-tertiary); letter-spacing:0;">deblocate</span></div>
+        <div style="font-family: 'Poppins', sans-serif; font-size: 22px; color: var(--gold); letter-spacing:1.5px;">${Object.keys(state.achievements).length} / ${Object.keys(ach).length} <span style="font-size:11px; color:var(--text-tertiary); letter-spacing:0;">deblocate</span></div>
       </div>
       <svg fill="none" stroke="var(--accent)" viewBox="0 0 24 24" width="22" height="22" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
     </div>
@@ -1772,7 +1948,7 @@ function renderHunter(el) {
         <div class="form-group"><label class="form-label">Vârstă</label><input type="number" class="form-input" value="${p.age||''}" onchange="updateProfile('age',this.value)"></div>
         <div class="form-group"><label class="form-label">Înălțime (cm)</label><input type="number" class="form-input" value="${p.height||''}" onchange="updateProfile('height',this.value)"></div>
       </div>
-      <div class="form-group"><label class="form-label">Greutate (kg)</label><input type="number" step="0.1" class="form-input" value="${p.weight||''}" onchange="updateProfile('weight',this.value)"></div>
+      <div class="form-group"><label class="form-label">Greutate (kg)</label><input type="text" inputmode="decimal" autocomplete="off" class="form-input" value="${p.weight||''}" onchange="updateProfile('weight',this.value)"></div>
     </div>
 
     <div class="card">
@@ -1788,7 +1964,7 @@ function renderHunter(el) {
 
     <div class="card">
       <div class="section-subtitle">Setări Bară</div>
-      <div class="form-group"><label class="form-label">Greutate Bară (kg)</label><input type="number" step="0.5" class="form-input" value="${state.settings.barWeight}" onchange="updateBarWeight(this.value)"></div>
+      <div class="form-group"><label class="form-label">Greutate Bară (kg)</label><input type="text" inputmode="decimal" autocomplete="off" class="form-input" value="${state.settings.barWeight}" onchange="updateBarWeight(this.value)"></div>
       <div class="info-box">
         <strong>TOTAL</strong> = greutate totală finală (cabluri, ganteră unică).<br>
         <strong>/ SIDE</strong> = discuri pe o parte (×2 + bara).<br>
@@ -1805,7 +1981,7 @@ function renderHunter(el) {
       <button class="danger-btn" onclick="resetAllData()">🗑 Șterge TOATE datele</button>
     </div>
 
-    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v3.0 • POWERED BY YOU</div>
+    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v4.0 • POWERED BY YOU</div>
   `;
 }
 
@@ -1857,7 +2033,7 @@ function addGoal() {
   render();
 }
 function deleteGoal(i) { state.profile.goals.splice(i, 1); saveState(); render(); }
-function updateBarWeight(v) { state.settings.barWeight = parseFloat(v) || 20; saveState(); }
+function updateBarWeight(v) { state.settings.barWeight = parseFloat(String(v).replace(',', '.')) || 20; saveState(); }
 
 function exportData() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -1873,15 +2049,31 @@ function importData(e) {
   const f = e.target.files[0];
   if (!f) return;
   const r = new FileReader();
-  r.onload = (ev) => {
+  r.onload = async (ev) => {
     try {
       const d = JSON.parse(ev.target.result);
-      if (!confirm('Se vor suprascrie TOATE datele. Ești sigură?')) return;
+      const ok = await showConfirm({ title: 'Import date', body: 'Se vor suprascrie TOATE datele curente cu cele din fișier. Continui?', confirmText: 'IMPORTĂ', danger: true });
+      if (!ok) return;
+      const prevSystem = state.system;
       state = { ...state, ...d, profile: { ...state.profile, ...d.profile } };
-      state.system.streakRecomputedV1 = false;
-      saveState();
-      recomputeStreakFromHabits();
+      // Normalizează structurile critice — un backup vechi/parțial poate omite stat-uri/containere
+      state.system = { ...prevSystem, ...(d.system || {}) };
+      const defStat = () => ({ level: 1, xp: 0 });
+      const imp = d.stats || {};
+      state.stats = {
+        STR: { ...defStat(), ...(imp.STR || {}) },
+        END: { ...defStat(), ...(imp.END || {}) },
+        MND: { ...defStat(), ...(imp.MND || {}) },
+        WIL: { ...defStat(), ...(imp.WIL || {}) }
+      };
+      if (!state.habits) state.habits = {};
+      if (!state.workouts) state.workouts = {};
+      if (!state.customExercises) state.customExercises = {};
       state.system.streakRecomputedV1 = true;
+      // Păstrează streak/shields salvate; recalculează din habits doar dacă nu există streak salvat.
+      // Forțează rollover-ul (model reset) pt zilele trecute de la export.
+      if (!state.system.lastPerfectDate) recomputeStreakFromHabits();
+      state.system.lastCheckDate = null;
       processDailyRollover();
       saveState();
       render();
@@ -1891,9 +2083,11 @@ function importData(e) {
   r.readAsText(f);
 }
 
-function resetAllData() {
-  if (!confirm('🚨 Ștergi TOT istoricul și setările? Ireversibil!')) return;
-  if (!confirm('Ești 100% sigură? Ultima șansă.')) return;
+async function resetAllData() {
+  const ok1 = await showConfirm({ title: '🚨 Șterge toate datele?', body: 'Se șterge TOT istoricul, progresul și setările. Acțiune ireversibilă!', confirmText: 'ȘTERGE', danger: true });
+  if (!ok1) return;
+  const ok2 = await showConfirm({ title: 'Ultima șansă', body: 'Ești 100% sigură? Nu se mai poate recupera nimic după asta.', confirmText: 'DA, ȘTERGE TOT', danger: true });
+  if (!ok2) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 }
@@ -1967,6 +2161,7 @@ function updateTimerDisplay() {
 
 // =================== INIT ===================
 loadState();
+migrateState();
 if (!state.system.streakRecomputedV1) {
   recomputeStreakFromHabits();
   state.system.streakRecomputedV1 = true;
@@ -1975,17 +2170,21 @@ if (!state.system.streakRecomputedV1) {
 processDailyRollover();
 ensureBonusForToday();
 ensureBossForWeek();
+_navRender = true;
 render();
 maybeShowWeeklyReport();
 
-document.body.addEventListener('touchmove', (e) => {
-  if (e.target.closest('input, textarea, button, .timer-modal, .modal-overlay')) return;
-}, { passive: true });
+// Onboarding la prima deschidere (doar utilizatoare cu adevărat noi)
+if (!state.system.welcomed) {
+  const isFresh = state.system.level === 1 && Object.keys(state.habits || {}).length === 0 && Object.keys(state.workouts || {}).length === 0;
+  if (isFresh) setTimeout(showWelcome, 500);
+  else { state.system.welcomed = true; saveState(); }
+}
 
 document.addEventListener('click', (e) => {
   const overlay = e.target.classList && e.target.classList.contains('modal-overlay') ? e.target : null;
   if (!overlay) return;
-  if (overlay.id === 'levelup-modal') return;
+  if (overlay.id === 'levelup-modal' || overlay.id === 'confirm-modal' || overlay.id === 'welcome-modal') return;
   overlay.classList.remove('active');
 });
 

@@ -13,11 +13,17 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="grad-shield" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffb3c1"/><stop offset="100%" stop-color="#d9586a"/>
+  </linearGradient>
+</defs></svg>
 
 <div class="app">
   <header class="header">
@@ -36,7 +42,7 @@
   <main id="page-content"></main>
 </div>
 
-<button class="timer-fab" id="timer-fab" onclick="openTimer()">
+<button class="timer-fab" id="timer-fab" onclick="openTimer()" aria-label="Cronometru pauză">
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <circle cx="12" cy="13" r="8"/>
     <path d="M12 9v4l2 2M9 2h6"/>
@@ -173,6 +179,26 @@
 </div>
 
 <div class="modal-overlay" id="weekly-modal" style="z-index: 350;"></div>
+
+<div class="modal-overlay" id="confirm-modal" style="z-index: 360;">
+  <div class="modal-content">
+    <div class="modal-title" id="confirm-title">Confirmare</div>
+    <div id="confirm-body" style="margin-top: 14px; font-size: 14px; line-height: 1.6; color: var(--text-secondary);"></div>
+    <div class="modal-actions" style="margin-top: 20px;">
+      <button class="timer-btn" id="confirm-cancel">ANULEAZĂ</button>
+      <button class="timer-btn primary" id="confirm-ok">CONFIRMĂ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="welcome-modal" style="z-index: 360;">
+  <div class="welcome-content">
+    <div class="welcome-sys">✨ ACCES ACORDAT</div>
+    <div class="welcome-title">BUN VENIT,<br>HUNTRESS</div>
+    <div class="welcome-body">Ai fost aleasă de Sistem. Completează misiunile zilnice, câștigă XP, urcă în rang și devino cea mai puternică versiune a ta.</div>
+    <button class="timer-btn primary" style="width:100%; margin-top:24px;" onclick="closeWelcome()">ÎNCEPE EVOLUȚIA</button>
+  </div>
+</div>
 
 <script src="data.js"></script>
 <script src="app.js"></script>
