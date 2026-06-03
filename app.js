@@ -1044,19 +1044,28 @@ function renderHome(el) {
   const req = getRequiredXP(lvl);
   const mainCount = ['morning_routine','prayer_am','affirmations','gratitude_pm','workout_xp_claimed'].filter(k => habits[k]).length;
 
-  const glance = `
-    <div class="glance-widget">
-      <div class="glance-row">
-        <div>
-          <div class="glance-streak">${streak}🍑</div>
-          <div class="glance-streak-label">Streak Zile</div>
+  const shields = state.system.shields || 0;
+  const streakNote = streak < 7 ? 'Continuă! Sub 7 zile.' : streak >= 30 ? '✨ Aurora Glow' : '🍑 În flori!';
+  const statusHtml = `
+    <div class="status-card">
+      <div class="status-stats">
+        <div class="status-stat">
+          <div class="status-stat-num streak">${streak}<span class="status-peach">🍑</span></div>
+          <div class="status-stat-label">Streak Zile</div>
         </div>
-        <div class="glance-missions">
-          <div class="glance-missions-big">${mainCount}/5</div>
-          <div class="glance-streak-label">Misiuni Azi</div>
+        <div class="status-stat status-stat-mid">
+          <div class="status-stat-num">${mainCount}<span class="status-stat-sub">/5</span></div>
+          <div class="status-stat-label">Misiuni Azi</div>
+        </div>
+        <div class="status-stat">
+          <div class="shield-stack" style="justify-content:center; height:38px; align-items:center;">
+            ${[0,1,2].map(i => `<div class="shield-icon ${i < shields ? 'active' : ''}">${ICON_SHIELD}</div>`).join('')}
+          </div>
+          <div class="status-stat-label">Shields</div>
         </div>
       </div>
-      <div class="glance-xp-bar"><div class="glance-xp-fill" style="width: ${Math.min(100,(xp/req)*100)}%"></div></div>
+      <div class="status-xp-bar"><div class="status-xp-fill" style="width:${Math.min(100,(xp/req)*100)}%"></div></div>
+      <div class="status-note">${streakNote}</div>
     </div>
   `;
 
@@ -1068,25 +1077,6 @@ function renderHome(el) {
       <div class="tip-content">
         <div class="tip-label">Tip-ul Zilei</div>
         <div class="tip-text">${window.DAILY_TIPS[tipIdx]}</div>
-      </div>
-    </div>
-  `;
-
-  const shields = state.system.shields || 0;
-  const shieldsHtml = `
-    <div class="streak-shield-row">
-      <div class="streak-flame ${streak >= 30 ? 'legend' : streak >= 7 ? 'fire' : ''}">
-        <div class="streak-num">${streak}</div>
-        <div>
-          <div class="streak-label">Streak</div>
-          <div style="font-size:10px; color: var(--text-tertiary); margin-top:2px;">${streak < 7 ? 'Continuă! Sub 7 zile.' : streak >= 30 ? '✨ AURORA GLOW' : 'În flori!'}</div>
-        </div>
-      </div>
-      <div>
-        <div class="streak-label" style="text-align:right; margin-bottom:4px;">Shields</div>
-        <div class="shield-stack">
-          ${[0,1,2].map(i => `<div class="shield-icon ${i < shields ? 'active' : ''}">${ICON_SHIELD}</div>`).join('')}
-        </div>
       </div>
     </div>
   `;
@@ -1166,19 +1156,18 @@ function renderHome(el) {
   }).join('');
 
   el.innerHTML = `
-    ${glance}
+    ${statusHtml}
     ${tipHtml}
 
     <div class="greeting-card">
       <div class="greeting">SISTEMUL TE SALUTĂ,</div>
       <div class="greeting-name">${escapeHtml(state.profile.name || 'HUNTRESS').toUpperCase()}</div>
       <div class="greeting-stats">
-        <span><strong>${state.system.bonusCompletedTotal || 0}</strong> bonus done</span>
-        <span><strong>${Object.keys(state.achievements).length}</strong> achievements</span>
+        <span><strong>${state.system.bonusCompletedTotal || 0}</strong> bonusuri</span>
+        <span><strong>${Object.keys(state.achievements).length}</strong> realizări</span>
       </div>
     </div>
 
-    ${shieldsHtml}
     ${bossHtml}
 
     <div class="quests-container">
@@ -1981,7 +1970,7 @@ function renderHunter(el) {
       <button class="danger-btn" onclick="resetAllData()">🗑 Șterge TOATE datele</button>
     </div>
 
-    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v4.0 • POWERED BY YOU</div>
+    <div style="text-align:center; padding: 24px 0 8px; color: var(--text-tertiary); font-size: 11px; letter-spacing:1.5px;">GLOW HUNTRESS v5.0 • POWERED BY YOU</div>
   `;
 }
 
