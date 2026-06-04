@@ -177,7 +177,7 @@ function runCountUps() {
 }
 
 // ===== CELEBRARE — particule + flash (paletă roz) =====
-function burstParticles(x, y, { count = 30, colors = ['#ff7a8a','#ffb380','#ff5d8f','#ffffff'], spread = 170, power = 1 } = {}) {
+function burstParticles(x, y, { count = 30, colors = ['#b06bff','#2dd4ff','#c850ff','#ffffff'], spread = 170, power = 1 } = {}) {
   const layer = document.createElement('div');
   layer.className = 'burst-layer';
   layer.style.left = x + 'px';
@@ -200,7 +200,7 @@ function burstParticles(x, y, { count = 30, colors = ['#ff7a8a','#ffb380','#ff5d
   setTimeout(() => layer.remove(), 1500);
 }
 
-function screenFlash(color = 'rgba(255,122,138,0.4)') {
+function screenFlash(color = 'rgba(176,107,255,0.4)') {
   const f = document.createElement('div');
   f.className = 'screen-flash';
   f.style.background = `radial-gradient(circle at 50% 44%, ${color} 0%, transparent 70%)`;
@@ -239,7 +239,7 @@ function showWelcome() {
   if (!m) return;
   vibrate([60, 40, 60]);
   m.classList.add('active');
-  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.38, { count: 34, power: 1.3, colors: ['#ff7a8a','#ffb380','#ff5d8f','#ffffff'] }), 280);
+  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.38, { count: 34, power: 1.3, colors: ['#b06bff','#2dd4ff','#c850ff','#ffffff'] }), 280);
 }
 function closeWelcome() {
   const m = document.getElementById('welcome-modal');
@@ -326,14 +326,14 @@ function getRequiredXP(level) {
 }
 
 const RANK_TIERS = [
-  { min: 1,   max: 9,   key: 'E', name: 'E-Rank Novice',     color: '#c5a8aa' },
-  { min: 10,  max: 19,  key: 'D', name: 'D-Rank Fighter',    color: '#7ed9a8' },
-  { min: 20,  max: 34,  key: 'C', name: 'C-Rank Glow',       color: '#ff9eb5' },
-  { min: 35,  max: 49,  key: 'B', name: 'B-Rank Bloom',      color: '#ff7a8a' },
-  { min: 50,  max: 69,  key: 'A', name: 'A-Rank Empress',    color: '#ffb380', glow: '0 0 12px rgba(255,179,128,0.5)' },
-  { min: 70,  max: 84,  key: 'S', name: 'S-Rank Queen',      color: '#ffd16a', glow: '0 0 14px rgba(255,209,106,0.5)' },
-  { min: 85,  max: 99,  key: 'SS',name: 'National Beauty',   color: '#ff5d8f', glow: '0 0 16px rgba(255,93,143,0.5)' },
-  { min: 100, max: 124, key: 'SSS',name:'Crystal Goddess',   color: '#ffeae5', glow: '0 0 20px rgba(255,234,229,0.7)' },
+  { min: 1,   max: 9,   key: 'E', name: 'E-Rank Novice',     color: '#b3a8d6' },
+  { min: 10,  max: 19,  key: 'D', name: 'D-Rank Fighter',    color: '#4dffc3' },
+  { min: 20,  max: 34,  key: 'C', name: 'C-Rank Glow',       color: '#6b9fff' },
+  { min: 35,  max: 49,  key: 'B', name: 'B-Rank Bloom',      color: '#b06bff' },
+  { min: 50,  max: 69,  key: 'A', name: 'A-Rank Empress',    color: '#2dd4ff', glow: '0 0 12px rgba(45,212,255,0.5)' },
+  { min: 70,  max: 84,  key: 'S', name: 'S-Rank Queen',      color: '#e95fff', glow: '0 0 14px rgba(233,95,255,0.5)' },
+  { min: 85,  max: 99,  key: 'SS',name: 'National Beauty',   color: '#c850ff', glow: '0 0 16px rgba(200,80,255,0.5)' },
+  { min: 100, max: 124, key: 'SSS',name:'Crystal Goddess',   color: '#f0eaff', glow: '0 0 20px rgba(240,234,255,0.7)' },
   { min: 125, max: 149, key: 'X', name: 'Aurora',            color: '#ff4a5e', glow: '0 0 22px rgba(255,74,94,0.7)' },
   { min: 150, max: 9999,key: 'G', name: 'Divine Mode',       color: '#ffffff', glow: '0 0 24px rgba(255,255,255,0.9)' }
 ];
@@ -413,13 +413,13 @@ function statPct(key) {
 }
 
 function getStatTier(level) {
-  if (level < 10)  return { name: 'Novice',       color: '#c5a8aa', glow: 'none' };
-  if (level < 25)  return { name: 'Adept',        color: '#7ed9a8', glow: '0 0 8px rgba(126,217,168,0.4)' };
-  if (level < 50)  return { name: 'Expert',       color: '#ff9eb5', glow: '0 0 10px rgba(255,158,181,0.45)' };
-  if (level < 75)  return { name: 'Master',       color: '#ff7a8a', glow: '0 0 12px rgba(255,122,138,0.5)' };
-  if (level < 100) return { name: 'Grandmaster',  color: '#ffb380', glow: '0 0 14px rgba(255,179,128,0.55)' };
-  if (level < 150) return { name: 'Mythic',       color: '#ffd16a', glow: '0 0 16px rgba(255,209,106,0.6)' };
-  if (level < 200) return { name: 'Legend',       color: '#ff5d8f', glow: '0 0 18px rgba(255,93,143,0.65)' };
+  if (level < 10)  return { name: 'Novice',       color: '#b3a8d6', glow: 'none' };
+  if (level < 25)  return { name: 'Adept',        color: '#4dffc3', glow: '0 0 8px rgba(77,255,195,0.4)' };
+  if (level < 50)  return { name: 'Expert',       color: '#6b9fff', glow: '0 0 10px rgba(107,159,255,0.45)' };
+  if (level < 75)  return { name: 'Master',       color: '#b06bff', glow: '0 0 12px rgba(176,107,255,0.5)' };
+  if (level < 100) return { name: 'Grandmaster',  color: '#2dd4ff', glow: '0 0 14px rgba(45,212,255,0.55)' };
+  if (level < 150) return { name: 'Mythic',       color: '#e95fff', glow: '0 0 16px rgba(233,95,255,0.6)' };
+  if (level < 200) return { name: 'Legend',       color: '#c850ff', glow: '0 0 18px rgba(200,80,255,0.65)' };
   if (level < 300) return { name: 'Ascendant',    color: '#ff4a5e', glow: '0 0 20px rgba(255,74,94,0.7)' };
   return                  { name: 'Transcendent', color: '#ffffff', glow: '0 0 24px rgba(255,255,255,0.9)' };
 }
@@ -720,8 +720,8 @@ function completeBoss() {
   if (b >= 5) unlockAchievement('boss_5');
   if (b >= 10) unlockAchievement('boss_10');
   if (b >= 25) unlockAchievement('boss_25');
-  screenFlash('rgba(255,93,143,0.42)');
-  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.5, { count: 48, power: 1.7, colors: ['#ff5d8f','#ff7a8a','#ffb380','#ffffff'] }), 90);
+  screenFlash('rgba(200,80,255,0.42)');
+  setTimeout(() => burstParticles(window.innerWidth / 2, window.innerHeight * 0.5, { count: 48, power: 1.7, colors: ['#c850ff','#b06bff','#2dd4ff','#ffffff'] }), 90);
   saveState();
   render();
 }
@@ -779,9 +779,9 @@ function showAchievementModal(id) {
     burstParticles(window.innerWidth / 2, window.innerHeight * 0.4, {
       count: legendary ? 46 : 26,
       power: legendary ? 1.6 : 1.05,
-      colors: legendary ? ['#ff5d8f','#ffd9b0','#ffffff','#ffb380'] : ['#ff7a8a','#ffb3c1','#ffffff']
+      colors: legendary ? ['#c850ff','#b3e6ff','#ffffff','#2dd4ff'] : ['#b06bff','#d9b3ff','#ffffff']
     });
-    if (legendary) screenFlash('rgba(255,93,143,0.35)');
+    if (legendary) screenFlash('rgba(200,80,255,0.35)');
   }, 200);
 }
 
@@ -953,8 +953,8 @@ function showLevelUpModal(newLevel) {
   rankEl.style.boxShadow = rank.glow || 'none';
   modal.classList.add('active');
   setTimeout(() => {
-    screenFlash('rgba(255,179,128,0.40)');
-    burstParticles(window.innerWidth / 2, window.innerHeight * 0.42, { count: 42, power: 1.5, colors: ['#ffb380','#ffd9b0','#ff7a8a','#ffffff'] });
+    screenFlash('rgba(45,212,255,0.40)');
+    burstParticles(window.innerWidth / 2, window.innerHeight * 0.42, { count: 42, power: 1.5, colors: ['#2dd4ff','#b3e6ff','#b06bff','#ffffff'] });
   }, 140);
 }
 function closeLevelUpModal() { document.getElementById('levelup-modal').classList.remove('active'); }
@@ -1201,7 +1201,7 @@ function renderHome(el) {
       ${questsHtml}
     </div>
 
-    <div class="quests-container" style="background: linear-gradient(135deg, var(--bg-surface), rgba(255, 122, 138, 0.04));">
+    <div class="quests-container" style="background: linear-gradient(135deg, var(--bg-surface), rgba(176, 107, 255, 0.04));">
       <div class="bonus-section-label">
         <div class="section-subtitle" style="margin-bottom:0;">✦ Misiuni Bonus</div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-tertiary); letter-spacing: 1px;">${bonusDone}/${bonusTotal}</div>
@@ -1293,7 +1293,7 @@ function renderTomorrowPreview() {
   }).join('');
 
   const bossHtml = bossMission ? `
-    <div style="background: linear-gradient(135deg, rgba(255,74,94,0.05), rgba(255,179,128,0.04)); border: 1.5px solid var(--danger); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+    <div style="background: linear-gradient(135deg, rgba(255,74,94,0.05), rgba(45,212,255,0.04)); border: 1.5px solid var(--danger); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
         <div style="font-family: 'Poppins', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--danger);">👑 BOSS DAY MÂINE</div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold);">+250 XP</div>
@@ -1304,7 +1304,7 @@ function renderTomorrowPreview() {
   ` : '';
 
   return `
-    <div class="card" style="background: ${isEvening ? 'linear-gradient(135deg, var(--bg-surface), rgba(255, 179, 128, 0.06))' : 'var(--bg-surface)'}; border-color: ${isEvening ? 'var(--gold)' : 'var(--border-light)'}; margin-top: 16px;">
+    <div class="card" style="background: ${isEvening ? 'linear-gradient(135deg, var(--bg-surface), rgba(45, 212, 255, 0.06))' : 'var(--bg-surface)'}; border-color: ${isEvening ? 'var(--gold)' : 'var(--border-light)'}; margin-top: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleTomorrowPreview()">
         <div>
           <div class="section-subtitle" style="margin-bottom: 4px; color: ${isEvening ? 'var(--gold)' : 'var(--accent)'};">${isEvening ? '🌙 PLANIFICĂ MÂINE' : '👁 SNEAK PEEK — MÂINE'}</div>
@@ -1724,10 +1724,10 @@ function renderChart(stats) {
   const id = 'g' + Math.random().toString(36).slice(2,9);
   return `
     <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;" preserveAspectRatio="none">
-      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff7a8a" stop-opacity="0.4"/><stop offset="100%" stop-color="#ff7a8a" stop-opacity="0"/></linearGradient></defs>
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b06bff" stop-opacity="0.4"/><stop offset="100%" stop-color="#b06bff" stop-opacity="0"/></linearGradient></defs>
       <path d="${area}" fill="url(#${id})"/>
-      <path d="${d}" fill="none" stroke="#ff7a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 6px rgba(255,122,138,0.5))"/>
-      ${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#ffb380" stroke="#22171c" stroke-width="1.5"/>`).join('')}
+      <path d="${d}" fill="none" stroke="#b06bff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 6px rgba(176,107,255,0.5))"/>
+      ${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#2dd4ff" stroke="#160f24" stroke-width="1.5"/>`).join('')}
     </svg>
   `;
 }

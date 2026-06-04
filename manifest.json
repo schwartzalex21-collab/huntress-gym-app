@@ -5,8 +5,8 @@
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1a1115",
-  "theme_color": "#ff7a8a",
+  "background_color": "#0d0a16",
+  "theme_color": "#b06bff",
   "icons": [
     {
       "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%231a1115'/><text x='96' y='128' font-family='Georgia' font-size='100' text-anchor='middle' fill='%23ff7a8a'>🍑</text></svg>",
